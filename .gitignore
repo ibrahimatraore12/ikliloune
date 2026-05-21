@@ -1,0 +1,21 @@
+# Environnement Python
+.python-version
+__pycache__/
+*.pyc
+*.pyo
+
+# Base de données locale
+*.db
+*.sqlite3
+
+# Variables secrètes (mots de passe, clés API)
+.env
+
+# Images produits (trop lourdes pour Git)
+static/images/produits/
+uploads_temp/
+
+# Système
+.DS_Store
+Thumbs.db
+*.log
