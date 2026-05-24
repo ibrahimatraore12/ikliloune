@@ -12,7 +12,7 @@ from datetime import datetime
 auth_bp = Blueprint("auth", __name__)
 
 
-@auth_bp.route("/admin/login", methods=["GET", "POST"])
+@auth_bp.route("/ik-gestion-2025-prive", methods=["GET", "POST"])
 def login():
     """Page de connexion admin."""
     if request.method == "POST":
@@ -34,7 +34,7 @@ def login():
     return render_template("admin/login.html")
 
 
-@auth_bp.route("/admin/logout")
+@auth_bp.route("/ik-gestion-logout")
 @login_required
 def logout():
     """Déconnecte l'admin."""
