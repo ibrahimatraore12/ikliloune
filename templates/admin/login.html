@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block titre %}Connexion Admin — IKLILOUNE{% endblock %}
+{% block body_class %}page-login{% endblock %}
+
+{% block contenu %}
+<div class="login-wrap">
+  <div class="login-box">
+
+    <div class="login-logo">
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <defs>
+          <radialGradient id="bgL" cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#FAD4DC"/>
+            <stop offset="45%" stop-color="#F2AEBB"/>
+            <stop offset="100%" stop-color="#A85870"/>
+          </radialGradient>
+          <linearGradient id="orL" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F0C96B"/>
+            <stop offset="100%" stop-color="#C9922A"/>
+          </linearGradient>
+        </defs>
+        <circle cx="26" cy="26" r="25" fill="url(#bgL)"/>
+        <circle cx="26" cy="26" r="24" fill="none" stroke="url(#orL)" stroke-width="1.5" opacity="0.7"/>
+        <polygon points="26,10 38,18 26,26 14,18" fill="rgba(201,146,42,0.1)" stroke="url(#orL)" stroke-width="1.8" stroke-linejoin="round"/>
+        <polygon points="14,18 26,26 26,42 14,34" fill="rgba(201,146,42,0.05)" stroke="url(#orL)" stroke-width="1.8" stroke-linejoin="round"/>
+        <polygon points="38,18 26,26 26,42 38,34" fill="rgba(240,201,107,0.07)" stroke="url(#orL)" stroke-width="1.8" stroke-linejoin="round"/>
+        <circle cx="26" cy="10" r="2" fill="#F0C96B"/>
+        <circle cx="14" cy="18" r="1.6" fill="#C9922A"/>
+        <circle cx="38" cy="18" r="1.6" fill="#C9922A"/>
+        <circle cx="26" cy="26" r="2" fill="#F0C96B"/>
+        <circle cx="26" cy="42" r="1.6" fill="#F0C96B"/>
+      </svg>
+    </div>
+
+    <h1 class="login-titre">IKLILOUNE</h1>
+    <p class="login-sous">Accès administration · Privé et exclusif</p>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="login-erreur">⚠️ {{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="/admin/login" class="login-form">
+      <!-- Protection CSRF -->
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+      <div class="login-field">
+        <label for="username">Identifiant</label>
+        <input type="text" id="username" name="username"
+               placeholder="Nom d'utilisateur"
+               autocomplete="username" required autofocus>
+      </div>
+
+      <div class="login-field">
+        <label for="password">Mot de passe</label>
+        <input type="password" id="password" name="password"
+               placeholder="••••••••••••"
+               autocomplete="current-password" required>
+      </div>
+
+      <button type="submit" class="login-btn">🔐 Se connecter</button>
+    </form>
+
+    <a href="/" class="login-retour">← Retour à la boutique</a>
+  </div>
+</div>
+{% endblock %}

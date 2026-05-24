@@ -19,3 +19,4 @@ uploads_temp/
 .DS_Store
 Thumbs.db
 *.log
+.env

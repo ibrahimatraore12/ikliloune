@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+{% block titre %}IKLILOUNE — La Maison du Chic{% endblock %}
+{% block body_class %}page-boutique{% endblock %}
+
+{% block contenu %}
+
+<!-- ══ TICKER DÉFILANT ══════════════════════════════════════ -->
+<div class="ticker-wrap" id="ticker-wrap">
+  <div class="ticker-track" id="ticker-track">
+    <span class="ticker-item flash">✨ -5% sur votre 1ère commande — Inscrivez-vous !</span>
+    <span class="ticker-item">🚚 Livraison GRATUITE à Abidjan</span>
+    <span class="ticker-item highlight">🔥 Nouvelles collections Perles &amp; Corail 2025</span>
+    <span class="ticker-item">🟠 Orange Money · 🟡 MTN MoMo · 🔵 Wave acceptés</span>
+    <span class="ticker-item">📲 Commandez aussi par WhatsApp : +225 01 04 14 41 41</span>
+    <span class="ticker-item flash">🪸 Boubou Brodé Or — Stock limité !</span>
+    <!-- Répétition pour boucle infinie -->
+    <span class="ticker-item flash">✨ -5% sur votre 1ère commande — Inscrivez-vous !</span>
+    <span class="ticker-item">🚚 Livraison GRATUITE à Abidjan</span>
+    <span class="ticker-item highlight">🔥 Nouvelles collections Perles &amp; Corail 2025</span>
+    <span class="ticker-item">🟠 Orange Money · 🟡 MTN MoMo · �� Wave acceptés</span>
+    <span class="ticker-item">📲 Commandez aussi par WhatsApp : +225 01 04 14 41 41</span>
+    <span class="ticker-item flash">🪸 Boubou Brodé Or — Stock limité !</span>
+  </div>
+  <button class="ticker-pause" id="ticker-pause" onclick="toggleTicker()" aria-label="Pause/Lecture">⏸</button>
+</div>
+
+<!-- ══ NAVIGATION ═══════════════════════════════════════════ -->
+<nav class="navbar" id="navbar">
+  <a class="nav-logo" href="/">
+    <div class="logo-sphere">
+      <!-- Logo cubique SVG identique à la maquette -->
+      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bgN" cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#FAD4DC"/>
+            <stop offset="45%" stop-color="#F2AEBB"/>
+            <stop offset="100%" stop-color="#A85870"/>
+          </radialGradient>
+          <filter id="glowN">
+            <feGaussianBlur stdDeviation="0.7" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <linearGradient id="orN" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F0C96B"/>
+            <stop offset="50%" stop-color="#C9922A"/>
+            <stop offset="100%" stop-color="#F0C96B"/>
+          </linearGradient>
+        </defs>
+        <circle cx="19" cy="19" r="18" fill="url(#bgN)"/>
+        <circle cx="19" cy="19" r="17" fill="none" stroke="url(#orN)" stroke-width="1.2" opacity="0.7"/>
+        <g filter="url(#glowN)">
+          <polygon points="19,8 29,14 19,20 9,14" fill="rgba(201,146,42,0.08)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
+          <polygon points="9,14 19,20 19,32 9,26"  fill="rgba(201,146,42,0.04)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
+          <polygon points="29,14 19,20 19,32 29,26" fill="rgba(240,201,107,0.06)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
+          <circle cx="19" cy="8"  r="1.4" fill="#F0C96B"/>
+          <circle cx="9"  cy="14" r="1.2" fill="#C9922A"/>
+          <circle cx="29" cy="14" r="1.2" fill="#C9922A"/>
+          <circle cx="19" cy="20" r="1.4" fill="#F0C96B"/>
+          <circle cx="9"  cy="26" r="1.2" fill="#C9922A"/>
+          <circle cx="29" cy="26" r="1.2" fill="#C9922A"/>
+          <circle cx="19" cy="32" r="1.2" fill="#F0C96B"/>
+        </g>
+      </svg>
+    </div>
+    <div class="logo-textes">
+      <span class="logo-nom">IKLILOUNE</span>
+      <span class="logo-slogan">La Maison du Chic</span>
+    </div>
+  </a>
+
+  <div class="nav-menu" id="nav-menu">
+    <button class="nav-lien active" onclick="filtrerGenre('tous', this)">Tous</button>
+    <button class="nav-lien" onclick="filtrerGenre('femme', this)">🫧 Perles · Femme</button>
+    <button class="nav-lien" onclick="filtrerGenre('homme', this)">🪸 Corail · Homme</button>
+  </div>
+
+  <div class="nav-droite">
+    <div class="nav-recherche">
+      <span>🔍</span>
+      <input type="text" placeholder="Chercher un article..."
+             id="input-recherche" oninput="rechercherProduits(this.value)">
+    </div>
+    <button class="btn-panier" onclick="ouvrirPanier()" aria-label="Panier">
+      🛒 Panier
+      <span class="panier-badge" id="panier-badge">0</span>
+    </button>
+    <button class="nav-hamburger" id="hamburger"
+            onclick="toggleMenu()" aria-label="Menu">☰</button>
+  </div>
+</nav>
+
+<!-- ══ HERO CARROUSEL ════════════════════════════════════════ -->
+<section class="hero-carousel" aria-label="Bannière principale">
+  <div class="hero-slides" id="hero-slides">
+
+    <div class="hero-slide slide-1">
+      <div class="slide-contenu">
+        <div class="slide-tag">🫧 Collection Perles · Femme</div>
+        <h1 class="slide-titre">La Maison<br>du <em>Chic</em></h1>
+        <p class="slide-sous">Parfums envoûtants, sacs de caractère,<br>vêtements qui racontent votre histoire.</p>
+        <button class="slide-cta" onclick="filtrerCategorie('parfum', null)">Découvrir les Parfums →</button>
+      </div>
+      <div class="slide-deco" aria-hidden="true">🌸</div>
+    </div>
+
+    <div class="hero-slide slide-2">
+      <div class="slide-contenu">
+        <div class="slide-tag corail">🪸 Collection Corail · Homme</div>
+        <h1 class="slide-titre clair">L'Élégance<br><em>Masculine</em></h1>
+        <p class="slide-sous clair">Oud Prestige, boubous brodés, derbys raffinés.</p>
+        <button class="slide-cta" onclick="filtrerGenre('homme', null)">Voir la collection →</button>
+      </div>
+      <div class="slide-deco" aria-hidden="true">🪸</div>
+    </div>
+
+    <div class="hero-slide slide-3">
+      <div class="slide-contenu">
+        <div class="slide-tag rouge">🔥 Promotions en cours</div>
+        <h1 class="slide-titre">Jusqu'à<br><em class="rouge">-30%</em></h1>
+        <p class="slide-sous">Sur une sélection Perles &amp; Corail.<br>Livraison offerte à Abidjan.</p>
+        <button class="slide-cta rouge" onclick="filtrerCategorie('promo', null)">Voir les promos →</button>
+      </div>
+      <div class="slide-deco" aria-hidden="true">🛍️</div>
+    </div>
+
+  </div>
+  <button class="hero-fleche gauche" onclick="deplacerSlide(-1)" aria-label="Précédent">‹</button>
+  <button class="hero-fleche droite" onclick="deplacerSlide(1)"  aria-label="Suivant">›</button>
+  <div class="hero-dots" id="hero-dots" aria-label="Navigation slides"></div>
+</section>
+
+<!-- ══ BARRE FILTRES ═════════════════════════════════════════ -->
+<div class="barre-cats" id="barre-cats">
+  <button class="cat-pill active" onclick="filtrerCategorie('tous', this)">🏷️ Tout voir</button>
+  <div class="cat-sep"></div>
+  <button class="cat-pill" onclick="filtrerCategorie('parfum', this)">🌸 Parfums</button>
+  <button class="cat-pill" onclick="filtrerCategorie('sac', this)">👜 Sacs</button>
+  <button class="cat-pill" onclick="filtrerCategorie('chaussure', this)">👟 Chaussures</button>
+  <button class="cat-pill" onclick="filtrerCategorie('vetement', this)">👗 Vêtements</button>
+  <div class="cat-sep"></div>
+  <button class="cat-pill promo" onclick="filtrerCategorie('promo', this)">🔥 Promotions</button>
+  <div class="cat-tri">
+    <select onchange="trierProduits(this.value)" aria-label="Trier par">
+      <option value="">Tri par défaut</option>
+      <option value="prix-asc">Prix croissant</option>
+      <option value="prix-desc">Prix décroissant</option>
+      <option value="nouveau">Nouveautés</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ GRILLE PRODUITS ═══════════════════════════════════════ -->
+<main class="section-produits" id="section-produits">
+  <div class="produits-header">
+    <h2 class="produits-titre">Catalogue <small id="produits-count"></small></h2>
+  </div>
+  <div class="produits-grille" id="produits-grille">
+    <!-- Chargement initial -->
+    <div class="chargement">Chargement des articles...</div>
+  </div>
+</main>
+
+<!-- ══ PANNEAU PANIER (slide-in) ═════════════════════════════ -->
+<div class="panier-overlay" id="panier-overlay" onclick="fermerPanier()"></div>
+<aside class="panier-panel" id="panier-panel" aria-label="Panier">
+  <div class="panier-header">
+    <h2>🛒 Mon Panier</h2>
+    <button onclick="fermerPanier()" aria-label="Fermer le panier">✕</button>
+  </div>
+  <div class="panier-contenu" id="panier-contenu">
+    <div class="panier-vide" id="panier-vide">
+      <div style="font-size:56px">🛒</div>
+      <p>Votre panier est vide</p>
+    </div>
+    <div id="panier-articles"></div>
+  </div>
+  <div class="panier-footer" id="panier-footer" style="display:none">
+    <div class="panier-total">
+      <span>Sous-total</span>
+      <span id="panier-sous-total">0 FCFA</span>
+    </div>
+    <div class="panier-total total-final">
+      <span>Total</span>
+      <span id="panier-total-final">0 FCFA</span>
+    </div>
+    <div id="panier-remise-ligne" style="display:none" class="panier-total remise">
+      <span>🎉 Code -5%</span>
+      <span id="panier-remise-montant"></span>
+    </div>
+
+    <!-- Mode de paiement -->
+    <div class="checkout-label">Mode de paiement</div>
+    <div class="paiement-options">
+      <label class="pay-opt selected"><input type="radio" name="pay" value="orange" checked>🟠 Orange Money<small>+225 01 04 14 41 41</small></label>
+      <label class="pay-opt"><input type="radio" name="pay" value="momo">🟡 MTN MoMo<small>+225 05 85 82 68 88</small></label>
+      <label class="pay-opt"><input type="radio" name="pay" value="wave">🔵 Wave<small>Scan QR</small></label>
+    </div>
+
+    <!-- Infos client -->
+    <div class="checkout-label">Vos informations</div>
+    <input class="checkout-input" id="c-nom"      placeholder="Prénom et Nom *">
+    <input class="checkout-input" id="c-tel"      placeholder="Téléphone (+225...) *" type="tel">
+    <input class="checkout-input" id="c-email"    placeholder="Email (facultatif)" type="email">
+    <input class="checkout-input" id="c-adresse"  placeholder="Commune / Quartier Abidjan">
+    <input class="checkout-input" id="c-promo"    placeholder="Code promo (ex: IKLI5)"
+           oninput="appliquerPromo(this.value)">
+
+    <button class="btn-commander" onclick="validerCommande()">✅ Valider la commande</button>
+    <button class="btn-whatsapp"  onclick="commanderWhatsApp()">💬 Commander par WhatsApp</button>
+  </div>
+</aside>
+
+<!-- ══ POP-UP CAPTURE EMAIL (-5%) ════════════════════════════ -->
+<div class="popup-overlay" id="popup-overlay">
+  <div class="popup-box" role="dialog" aria-modal="true" aria-label="Offre -5%">
+    <div class="popup-top">
+      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
+        <defs>
+          <radialGradient id="bgPop" cx="38%" cy="32%" r="65%">
+            <stop offset="0%" stop-color="#FAD4DC"/>
+            <stop offset="45%" stop-color="#F2AEBB"/>
+            <stop offset="100%" stop-color="#A85870"/>
+          </radialGradient>
+          <linearGradient id="orPop" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#F0C96B"/>
+            <stop offset="100%" stop-color="#C9922A"/>
+          </linearGradient>
+        </defs>
+        <circle cx="28" cy="28" r="27" fill="url(#bgPop)"/>
+        <circle cx="28" cy="28" r="26" fill="none" stroke="url(#orPop)" stroke-width="1.3" opacity="0.7"/>
+        <polygon points="28,11 38,17 28,23 18,17" fill="rgba(201,146,42,0.1)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
+        <polygon points="18,17 28,23 28,35 18,29" fill="rgba(201,146,42,0.05)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
+        <polygon points="38,17 28,23 28,35 38,29" fill="rgba(240,201,107,0.07)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
+        <circle cx="28" cy="11" r="1.8" fill="#F0C96B"/>
+        <circle cx="18" cy="17" r="1.5" fill="#C9922A"/>
+        <circle cx="38" cy="17" r="1.5" fill="#C9922A"/>
+        <circle cx="28" cy="23" r="1.8" fill="#F0C96B"/>
+        <circle cx="28" cy="35" r="1.5" fill="#F0C96B"/>
+      </svg>
+      <p class="popup-tag">Offre exclusive · 1ère commande</p>
+      <h2 class="popup-titre">Rejoignez<br><em>La Maison du Chic</em></h2>
+      <button class="popup-close" onclick="fermerPopup()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="popup-body">
+      <div class="popup-avantage">
+        <span class="popup-pct">-5%</span>
+        <div>
+          <strong>Réduction sur votre 1ère commande</strong><br>
+          + Accès en avant-première aux nouvelles collections
+        </div>
+      </div>
+      <form id="popup-form" onsubmit="soumettrePopup(event)">
+        <div class="popup-row">
+          <div class="popup-field"><span>👤</span><input type="text"  id="p-prenom"  placeholder="Prénom *" required></div>
+          <div class="popup-field"><span>��</span><input type="text"  id="p-nom"     placeholder="Nom *" required></div>
+        </div>
+        <div class="popup-field"><span>📧</span><input type="email" id="p-email"   placeholder="Votre e-mail *" required></div>
+        <div class="popup-field"><span>📲</span><input type="tel"   id="p-tel"     placeholder="Téléphone (+225...)"></div>
+        <div class="popup-field">
+          <span>🛍️</span>
+          <select id="p-interet">
+            <option value="">Ce qui m'intéresse…</option>
+            <option value="parfum">🌸 Parfums</option>
+            <option value="sac">👜 Sacs &amp; Accessoires</option>
+            <option value="vetement">👗 Vêtements</option>
+            <option value="chaussure">👟 Chaussures</option>
+            <option value="tout">✨ Tout m'intéresse !</option>
+          </select>
+        </div>
+        <button type="submit" class="popup-submit">🎁 Obtenir mon code -5%</button>
+      </form>
+      <p class="popup-note">Données confidentielles. Désabonnement possible à tout moment.</p>
+      <button class="popup-skip" onclick="fermerPopup()">Non merci, je préfère payer plein tarif</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ CONFIRMATION COMMANDE ═════════════════════════════════ -->
+<div class="confirm-overlay" id="confirm-overlay">
+  <div class="confirm-box" role="dialog" aria-modal="true">
+    <div style="font-size:56px;margin-bottom:16px">🎉</div>
+    <h2>Commande confirmée !</h2>
+    <p>Notre équipe vous contacte très bientôt pour la livraison.</p>
+    <div class="confirm-num" id="confirm-num">N° CMD-2025-XXXXX</div>
+    <button class="btn-wa-confirm" id="btn-wa-confirm">💬 Confirmer sur WhatsApp</button>
+    <button class="btn-retour" onclick="fermerConfirm()">Retour à la boutique</button>
+  </div>
+</div>
+
+<!-- ══ PIED DE PAGE ══════════════════════════════════════════ -->
+{% include "partials/footer.html" %}
+
+<!-- ══ TOAST NOTIFICATION ════════════════════════════════════ -->
+<div class="toast" id="toast" role="alert" aria-live="polite">
+  <span id="toast-icone">✅</span>
+  <span id="toast-msg">Message</span>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/boutique.js') }}"></script>
+{% endblock %}

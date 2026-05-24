@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+{% block titre %}Dashboard Admin — IKLILOUNE{% endblock %}
+{% block body_class %}page-admin{% endblock %}
+
+{% block contenu %}
+<div class="admin-layout">
+
+  <!-- Sidebar -->
+  <aside class="admin-sidebar" id="admin-sidebar">
+    <div class="sidebar-logo">
+      <span class="sidebar-logo-nom">IKLILOUNE</span>
+      <span class="sidebar-logo-role">Administration</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="sbar-item active" onclick="adminSection('dashboard', this)">📊 Dashboard</button>
+      <button class="sbar-item" onclick="adminSection('produits', this)">🏷️ Produits</button>
+      <button class="sbar-item" onclick="adminSection('commandes', this)">📦 Commandes</button>
+      <button class="sbar-item" onclick="adminSection('clients', this)">👥 Clients</button>
+      <button class="sbar-item" onclick="adminSection('marketing', this)">📣 Marketing</button>
+      <div class="sidebar-sep"></div>
+      <a class="sbar-item" href="/" target="_blank">🏪 Voir la boutique</a>
+      <a class="sbar-item deconnexion" href="/admin/logout">�� Déconnexion</a>
+    </nav>
+  </aside>
+
+  <!-- Contenu principal -->
+  <main class="admin-main">
+
+    <!-- ══ SECTION DASHBOARD ══ -->
+    <section id="sec-dashboard" class="admin-section active">
+      <div class="admin-top">
+        <div>
+          <h1 class="admin-page-titre">Tableau de bord</h1>
+          <p class="admin-page-sous">IKLILOUNE · La Maison du Chic</p>
+        </div>
+        <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter un article</button>
+      </div>
+
+      <!-- KPIs -->
+      <div class="kpi-grille">
+        <div class="kpi"><div class="kpi-icone">��</div><div class="kpi-val">487 500</div><div class="kpi-lbl">CA du mois (FCFA)</div><div class="kpi-trend">▲ +12%</div></div>
+        <div class="kpi"><div class="kpi-icone">🏷️</div><div class="kpi-val">{{ kpis.nb_produits }}</div><div class="kpi-lbl">Articles actifs</div></div>
+        <div class="kpi"><div class="kpi-icone">📦</div><div class="kpi-val">{{ kpis.nb_commandes }}</div><div class="kpi-lbl">Commandes</div></div>
+        <div class="kpi"><div class="kpi-icone">👥</div><div class="kpi-val">{{ kpis.nb_clients }}</div><div class="kpi-lbl">Clients enregistrés</div></div>
+        <div class="kpi"><div class="kpi-icone">⚠️</div><div class="kpi-val">{{ kpis.ruptures }}</div><div class="kpi-lbl">Ruptures de stock</div></div>
+      </div>
+
+      <!-- Graphiques Matplotlib -->
+      <div class="graphiques-row">
+        <div class="graphique-box">
+          <h3>Ventes mensuelles</h3>
+          <img src="{{ graphique_ventes }}" alt="Graphique ventes mensuelles" style="width:100%;border-radius:8px">
+        </div>
+        <div class="graphique-box">
+          <h3>Répartition par catégorie</h3>
+          <img src="{{ graphique_cats }}" alt="Graphique catégories" style="width:100%;border-radius:8px">
+        </div>
+      </div>
+
+      <!-- Tableau produits rapide -->
+      <div class="admin-table-wrap">
+        <div class="admin-table-header">
+          <h3>Gestion des articles</h3>
+          <div style="display:flex;gap:8px">
+            <input class="admin-search" type="text" placeholder="Rechercher..."
+                   oninput="filtrerTableAdmin(this.value)">
+            <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table" id="table-produits">
+            <thead><tr>
+              <th>Article</th><th>Catégorie</th><th>Genre</th>
+              <th>Prix</th><th>Stock</th><th>Statut</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tbody-produits">
+              <tr><td colspan="7" style="text-align:center;padding:24px">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION COMMANDES ══ -->
+    <section id="sec-commandes" class="admin-section">
+      <div class="admin-top">
+        <div><h1 class="admin-page-titre">Commandes</h1></div>
+      </div>
+      <div class="admin-table-wrap">
+        <div class="table-scroll">
+          <table class="admin-table" id="table-commandes">
+            <thead><tr>
+              <th>Numéro</th><th>Client</th><th>Téléphone</th>
+              <th>Total</th><th>Paiement</th><th>Statut</th><th>Date</th><th>Actions</th>
+            </tr></thead>
+            <tbody id="tbody-commandes">
+              <tr><td colspan="8" style="text-align:center;padding:24px">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION CLIENTS ══ -->
+    <section id="sec-clients" class="admin-section">
+      <div class="admin-top">
+        <div><h1 class="admin-page-titre">Registre Clients</h1></div>
+        <a class="btn-primaire" href="/admin/api/clients/export">📥 Exporter CSV</a>
+      </div>
+      <div class="admin-table-wrap">
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Prénom</th><th>Nom</th><th>Email</th>
+              <th>Téléphone</th><th>Intérêt</th><th>Source</th><th>Commandes</th><th>Date</th>
+            </tr></thead>
+            <tbody id="tbody-clients">
+              <tr><td colspan="8" style="text-align:center;padding:24px">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION MARKETING ══ -->
+    <section id="sec-marketing" class="admin-section">
+      <div class="admin-top">
+        <div><h1 class="admin-page-titre">Campagnes Marketing</h1></div>
+      </div>
+      <div class="marketing-cards">
+        <div class="marketing-card">
+          <h3>📢 Bandeau défilant</h3>
+          <p>Gérez les messages visibles sur le site en temps réel.</p>
+          <div id="ticker-admin-liste"></div>
+          <div class="ticker-form">
+            <input id="new-ticker" placeholder="Nouveau message...">
+            <select id="new-ticker-type">
+              <option value="normal">Normal</option>
+              <option value="promo">Promotion</option>
+              <option value="flash">Flash (clignotant)</option>
+            </select>
+            <button class="btn-primaire" onclick="ajouterTicker()">Ajouter</button>
+          </div>
+        </div>
+        <div class="marketing-card">
+          <h3>📊 Statistiques clients</h3>
+          <div id="stats-clients">Chargement...</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ══ MODAL AJOUT / MODIFICATION PRODUIT ══ -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h2 id="modal-titre">Nouvel article</h2>
+      <button onclick="fermerModalProduit()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Upload photo -->
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()">
+        <div class="upload-icone">📷</div>
+        <p><strong>Cliquez pour ajouter la photo</strong><br>JPG, PNG, WebP — Max 10 Mo</p>
+        <img id="photo-preview" style="display:none;max-height:140px;border-radius:8px;margin-top:8px">
+        <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+      </div>
+
+      <!-- Type d'article -->
+      <div class="field-group">
+        <label class="field-lbl">Type d'article *</label>
+        <div class="type-selector" id="type-selector">
+          <div class="type-btn" onclick="choisirType('parfum',this)"><div>🌸</div><div>Parfum</div></div>
+          <div class="type-btn" onclick="choisirType('sac',this)"><div>👜</div><div>Sac</div></div>
+          <div class="type-btn" onclick="choisirType('chaussure',this)"><div>👟</div><div>Chaussure</div></div>
+          <div class="type-btn" onclick="choisirType('vetement',this)"><div>👗</div><div>Vêtement</div></div>
+        </div>
+      </div>
+
+      <!-- Champs communs -->
+      <div class="field-row">
+        <div class="field-group"><label class="field-lbl">Nom *</label><input class="field-input" id="f-nom" placeholder="Ex: Rose d'Or"></div>
+        <div class="field-group"><label class="field-lbl">Genre</label>
+          <select class="field-input" id="f-genre">
+            <option value="femme">🫧 Perles · Femme</option>
+            <option value="homme">🪸 Corail · Homme</option>
+            <option value="mixte">✨ Mixte</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label class="field-lbl">Prix (FCFA) *</label><input class="field-input" type="number" id="f-prix" placeholder="28500"></div>
+        <div class="field-group"><label class="field-lbl">Prix promo</label><input class="field-input" type="number" id="f-prix-promo" placeholder="Laisser vide"></div>
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label class="field-lbl">Stock *</label><input class="field-input" type="number" id="f-stock" placeholder="10" min="0"></div>
+        <div class="field-group"><label class="field-lbl">Badge</label>
+          <select class="field-input" id="f-badge">
+            <option value="">Aucun</option>
+            <option value="new">🟢 Nouveau</option>
+            <option value="promo">🔴 Promo</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-group"><label class="field-lbl">Description</label><input class="field-input" id="f-desc" placeholder="Description courte..."></div>
+
+      <!-- Couleurs -->
+      <div class="field-group">
+        <label class="field-lbl">Couleurs disponibles</label>
+        <div class="tags-wrap" id="tags-couleurs" onclick="document.getElementById('input-couleur').focus()">
+          <input class="tag-input" id="input-couleur" placeholder="Taper + Entrée" onkeydown="ajouterCouleurTag(event)">
+        </div>
+        <div class="color-presets">
+          <div class="cp" style="background:#1a1a1a" onclick="ajouterCouleurVite('#1a1a1a','Noir')" title="Noir"></div>
+          <div class="cp" style="background:#ffffff;border:1px solid #ddd" onclick="ajouterCouleurVite('#ffffff','Blanc')" title="Blanc"></div>
+          <div class="cp" style="background:#C9922A" onclick="ajouterCouleurVite('#C9922A','Or')" title="Or"></div>
+          <div class="cp" style="background:#8B0000" onclick="ajouterCouleurVite('#8B0000','Bordeaux')" title="Bordeaux"></div>
+          <div class="cp" style="background:#1E3A5F" onclick="ajouterCouleurVite('#1E3A5F','Marine')" title="Marine"></div>
+          <div class="cp" style="background:#D2691E" onclick="ajouterCouleurVite('#D2691E','Caramel')" title="Caramel"></div>
+          <div class="cp" style="background:#E8341C" onclick="ajouterCouleurVite('#E8341C','Rouge')" title="Rouge"></div>
+          <div class="cp" style="background:#F2AEBB" onclick="ajouterCouleurVite('#F2AEBB','Rose')" title="Rose"></div>
+        </div>
+      </div>
+
+      <!-- Champs dynamiques par type -->
+      <div id="champs-parfum"    class="champs-type" style="display:none">
+        <div class="field-row">
+          <div class="field-group"><label class="field-lbl">Contenance (ml)</label><input class="field-input" id="f-ml" placeholder="100"></div>
+          <div class="field-group"><label class="field-lbl">Famille olfactive</label>
+            <select class="field-input" id="f-olfactif">
+              <option>Floral Oriental</option><option>Boisé</option><option>Fruité</option><option>Musqué</option><option>Aquatique</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-group"><label class="field-lbl">Durée de tenue</label>
+          <select class="field-input" id="f-tenue">
+            <option>4-6 heures</option><option>6-8 heures</option><option>8-12 heures</option><option>+12 heures</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="champs-sac"       class="champs-type" style="display:none">
+        <div class="field-row">
+          <div class="field-group"><label class="field-lbl">Matière</label>
+            <select class="field-input" id="f-matiere-sac">
+              <option>Cuir véritable</option><option>Cuir synthétique</option><option>Tissu</option><option>Raphia</option><option>Wax</option>
+            </select>
+          </div>
+          <div class="field-group"><label class="field-lbl">Dimensions (L×H cm)</label><input class="field-input" id="f-dims" placeholder="35×25"></div>
+        </div>
+      </div>
+
+      <div id="champs-chaussure" class="champs-type" style="display:none">
+        <div class="field-group">
+          <label class="field-lbl">Pointures disponibles</label>
+          <div class="tags-wrap" id="tags-pointures" onclick="document.getElementById('input-pointure').focus()">
+            <input class="tag-input" id="input-pointure" placeholder="Ex: 38, puis Entrée" onkeydown="ajouterPointureTag(event)">
+          </div>
+          <div class="tailles-rapides">
+            <span>Ajout rapide :</span>
+            <script>['35','36','37','38','39','40','41','42','43','44','45'].forEach(t=>document.write(`<button type="button" onclick="ajouterPointureVite('${t}')">${t}</button>`))</script>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label class="field-lbl">Matière</label>
+            <select class="field-input" id="f-matiere-chaussure"><option>Cuir</option><option>Tissu</option><option>Synthétique</option></select>
+          </div>
+          <div class="field-group"><label class="field-lbl">Talon (cm)</label><input class="field-input" id="f-talon" placeholder="0 si plat"></div>
+        </div>
+      </div>
+
+      <div id="champs-vetement"  class="champs-type" style="display:none">
+        <div class="field-group">
+          <label class="field-lbl">Tailles disponibles</label>
+          <div class="tags-wrap" id="tags-tailles" onclick="document.getElementById('input-taille').focus()">
+            <input class="tag-input" id="input-taille" placeholder="Ex: M, puis Entrée" onkeydown="ajouterTailleTag(event)">
+          </div>
+          <div class="tailles-rapides">
+            <span>Ajout rapide :</span>
+            <script>['XS','S','M','L','XL','XXL','Unique'].forEach(t=>document.write(`<button type="button" onclick="ajouterTailleVite('${t}')">${t}</button>`))</script>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group"><label class="field-lbl">Tissu</label>
+            <select class="field-input" id="f-tissu"><option>Wax</option><option>Coton</option><option>Bazin</option><option>Soie</option><option>Lin</option></select>
+          </div>
+          <div class="field-group"><label class="field-lbl">Type</label>
+            <select class="field-input" id="f-type-vet"><option>Robe</option><option>Boubou</option><option>Chemise</option><option>Pantalon</option><option>Ensemble</option></select>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-annuler" onclick="fermerModalProduit()">Annuler</button>
+      <button class="btn-primaire" onclick="sauvegarderProduit()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast admin -->
+<div class="toast" id="toast" role="alert" aria-live="polite">
+  <span id="toast-icone">✅</span>
+  <span id="toast-msg">Message</span>
+</div>
+
+{% endblock %}
+
+{% block scripts_extra %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

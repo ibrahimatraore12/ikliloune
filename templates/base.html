@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="IKLILOUNE — La Maison du Chic. Parfums, sacs, vêtements et chaussures à Abidjan.">
+  <title>{% block titre %}IKLILOUNE — La Maison du Chic{% endblock %}</title>
+
+  <!-- Fonts Google -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- CSS global -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+
+  {% block head_extra %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+
+  {% block contenu %}{% endblock %}
+
+  <!-- JS global -->
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  {% block scripts_extra %}{% endblock %}
+
+</body>
+</html>
