@@ -35,6 +35,11 @@ class Client(db.Model):
     # Nombre de commandes passées
     nb_commandes = db.Column(db.Integer, nullable=False, default=0)
 
+    # Date de naissance (facultative — pour les offres anniversaire)
+    date_naissance = db.Column(db.String(10), nullable=True)
+    # Adresse (facultative)
+    adresse        = db.Column(db.String(300), nullable=True)
+
     # Consentement marketing (RGPD)
     consentement = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -53,8 +58,10 @@ class Client(db.Model):
             "email"       : self.email,
             "telephone"   : self.telephone or "",
             "interet"     : self.interet or "",
-            "source"      : self.source or "",
-            "nb_commandes": self.nb_commandes,
+            "source"         : self.source or "",
+            "date_naissance"  : self.date_naissance or "",
+            "adresse"         : self.adresse or "",
+            "nb_commandes"    : self.nb_commandes,
             "actif"       : self.actif,
             "cree_le"     : self.cree_le.strftime("%d/%m/%Y"),
         }

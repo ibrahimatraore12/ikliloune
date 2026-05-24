@@ -177,14 +177,16 @@ async function chargerTableClients() {
     if(!tbody) return;
     tbody.innerHTML = data.map(c => `
       <tr>
-        <td>${c.prenom}</td>
+        <td style="font-weight:700">${c.prenom}</td>
         <td>${c.nom||"—"}</td>
-        <td style="color:var(--or-sombre)">${c.email}</td>
+        <td style="color:var(--or-sombre);font-size:11px">${c.email.includes("sans-email")?"—":c.email}</td>
         <td>${c.telephone||"—"}</td>
+        <td>${c.date_naissance ? "🎂 "+c.date_naissance : "—"}</td>
+        <td>${c.adresse||"—"}</td>
         <td>${c.interet||"—"}</td>
         <td><span class="badge-statut s-info">${c.source||"popup"}</span></td>
         <td style="text-align:center">${c.nb_commandes}</td>
-        <td>${c.cree_le}</td>
+        <td style="font-size:11px">${c.cree_le}</td>
       </tr>`
     ).join("") || `<tr><td colspan="8" style="text-align:center;padding:24px">Aucun client enregistré</td></tr>`;
   } catch(e) { console.error("Erreur clients:", e); }
@@ -510,7 +512,7 @@ async function desactiverCode(id) {
 // ── Client manuel ─────────────────────────────────────────────
 function ouvrirModalClient() {
   document.getElementById("modal-client-bg").classList.add("show");
-  ["mc-prenom","mc-nom","mc-tel","mc-email"].forEach(id => {
+  ["mc-prenom","mc-nom","mc-tel","mc-email","mc-adresse","mc-naissance"].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = "";
   });
   const cmds = document.getElementById("mc-cmds");
@@ -536,11 +538,13 @@ async function sauvegarderClientManuel() {
       headers: {"Content-Type":"application/json"},
       body   : JSON.stringify({
         prenom,
-        nom          : document.getElementById("mc-nom")?.value.trim() || "",
-        telephone    : tel,
-        email        : document.getElementById("mc-email")?.value.trim() || "",
-        interet      : document.getElementById("mc-interet")?.value || "tout",
-        nb_commandes : parseInt(document.getElementById("mc-cmds")?.value || "0")
+        nom            : document.getElementById("mc-nom")?.value.trim() || "",
+        telephone      : tel,
+        email          : document.getElementById("mc-email")?.value.trim() || "",
+        interet        : document.getElementById("mc-interet")?.value || "tout",
+        adresse        : document.getElementById("mc-adresse")?.value.trim() || "",
+        date_naissance : document.getElementById("mc-naissance")?.value || "",
+        nb_commandes   : parseInt(document.getElementById("mc-cmds")?.value || "0")
       })
     });
     const data = await rep.json();

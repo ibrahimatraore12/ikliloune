@@ -170,8 +170,9 @@
         <div class="table-scroll">
           <table class="admin-table">
             <thead><tr>
-              <th>Prénom</th><th>Nom</th><th>Email</th>
-              <th>Téléphone</th><th>Intérêt</th><th>Source</th><th>Commandes</th><th>Date</th>
+              <th>Prénom</th><th>Nom</th><th>Email</th><th>Téléphone</th>
+              <th>Anniversaire</th><th>Adresse</th><th>Intérêt</th>
+              <th>Source</th><th>Cmds</th><th>Date</th>
             </tr></thead>
             <tbody id="tbody-clients">
               <tr><td colspan="8" style="text-align:center;padding:24px">Chargement...</td></tr>
@@ -387,8 +388,17 @@
           <option value="chaussure">👟 Chaussures</option>
         </select>
       </div>
-      <div class="field-group"><label class="field-lbl">Nombre de commandes déjà passées</label>
-        <input class="field-input" type="number" id="mc-cmds" placeholder="0" min="0" value="0">
+      <div class="field-group"><label class="field-lbl">Adresse / Quartier</label>
+        <input class="field-input" id="mc-adresse" placeholder="Ex: Cocody, Abidjan">
+      </div>
+      <div class="field-row">
+        <div class="field-group"><label class="field-lbl">Date de naissance</label>
+          <input class="field-input" type="date" id="mc-naissance">
+          <small style="font-size:10px;color:var(--brun-clair)">Facultatif — pour les offres anniversaire 🎂</small>
+        </div>
+        <div class="field-group"><label class="field-lbl">Commandes déjà passées</label>
+          <input class="field-input" type="number" id="mc-cmds" placeholder="0" min="0" value="0">
+        </div>
       </div>
     </div>
     <div class="modal-footer">

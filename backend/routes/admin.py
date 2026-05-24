@@ -208,8 +208,9 @@ def exporter_clients():
     clients = Client.query.filter_by(actif=True).all()
     output = io.StringIO()
     writer = csv.DictWriter(output, fieldnames=[
-        "id", "prenom", "nom", "email",
-        "telephone", "interet", "source", "nb_commandes", "cree_le"
+        "id", "prenom", "nom", "email", "telephone",
+        "date_naissance", "adresse", "interet",
+        "source", "nb_commandes", "cree_le"
     ])
     writer.writeheader()
     for c in clients:
@@ -284,15 +285,17 @@ def ajouter_client_manuel():
             email = f"client_{int(time.time())}@sans-email.ikliloune"
 
         client = Client(
-            prenom       = data.get("prenom", "").strip(),
-            nom          = data.get("nom", "").strip(),
-            email        = email,
-            telephone    = data.get("telephone", "").strip(),
-            interet      = data.get("interet", "tout"),
-            source       = "manuel",   # saisie manuelle par l'admin
-            nb_commandes = int(data.get("nb_commandes", 0)),
-            consentement = True,
-            actif        = True
+            prenom         = data.get("prenom", "").strip(),
+            nom            = data.get("nom", "").strip(),
+            email          = email,
+            telephone      = data.get("telephone", "").strip(),
+            interet        = data.get("interet", "tout"),
+            adresse        = data.get("adresse", "").strip(),
+            date_naissance = data.get("date_naissance", "").strip(),
+            source         = "manuel",
+            nb_commandes   = int(data.get("nb_commandes", 0)),
+            consentement   = True,
+            actif          = True
         )
         db.session.add(client)
         db.session.commit()
@@ -312,12 +315,15 @@ def modifier_client(cid):
     client = db.get_or_404(Client, cid)
     try:
         data = request.get_json()
-        client.prenom      = data.get("prenom", client.prenom)
-        client.nom         = data.get("nom", client.nom)
-        client.telephone   = data.get("telephone", client.telephone)
-        client.interet     = data.get("interet", client.interet)
-        client.nb_commandes = int(data.get("nb_commandes", client.nb_commandes))
-        client.actif       = data.get("actif", client.actif)
+        client.prenom         = data.get("prenom", client.prenom)
+        client.nom            = data.get("nom", client.nom)
+        client.telephone      = data.get("telephone", client.telephone)
+        client.email          = data.get("email", client.email)
+        client.interet        = data.get("interet", client.interet)
+        client.adresse        = data.get("adresse", client.adresse)
+        client.date_naissance = data.get("date_naissance", client.date_naissance)
+        client.nb_commandes   = int(data.get("nb_commandes", client.nb_commandes))
+        client.actif          = data.get("actif", client.actif)
         db.session.commit()
         return jsonify({"succes": True, "client": client.vers_dict()})
     except Exception as e:
