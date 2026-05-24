@@ -1,0 +1,20 @@
+# =============================================================
+# docker-compose.yml — Environnement de développement Docker
+# Usage : docker-compose up
+# =============================================================
+
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persister la base de données entre les redémarrages
+      - ./ikliloune.db:/app/ikliloune.db
+      # Persister les images produits
+      - ./static/images/produits:/app/static/images/produits
+    env_file:
+      - .env
+    restart: unless-stopped

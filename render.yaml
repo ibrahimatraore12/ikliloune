@@ -1,0 +1,23 @@
+# =============================================================
+# render.yaml — Configuration déploiement automatique Render
+# =============================================================
+
+services:
+  - type: web
+    name: ikliloune
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 "main:creer_app()"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "False"
+      - key: ADMIN_USERNAME
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: NUMERO_WHATSAPP
+        value: "2250104144141"
+      - key: EMAIL_MAGASIN
+        value: "contact@ikliloune.com"

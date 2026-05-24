@@ -20,3 +20,9 @@ uploads_temp/
 Thumbs.db
 *.log
 .env
+
+# Docker
+*.tar
+
+# Production
+gunicorn.log
