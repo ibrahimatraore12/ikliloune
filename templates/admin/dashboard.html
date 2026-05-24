@@ -17,6 +17,7 @@
       <button class="sbar-item" onclick="adminSection('commandes', this)">📦 Commandes</button>
       <button class="sbar-item" onclick="adminSection('clients', this)">👥 Clients</button>
       <button class="sbar-item" onclick="adminSection('marketing', this)">📣 Marketing</button>
+      <button class="sbar-item" onclick="adminSection('promos', this)">🎟️ Codes Promo</button>
       <div class="sidebar-sep"></div>
       <a class="sbar-item" href="/" target="_blank">🏪 Voir la boutique</a>
       <a class="sbar-item deconnexion" href="/admin/logout">�� Déconnexion</a>
@@ -101,11 +102,69 @@
       </div>
     </section>
 
-    <!-- ══ SECTION CLIENTS ══ -->
+
+    <!-- ══ SECTION CODES PROMO ══ -->
+    <section id="sec-promos" class="admin-section">
+      <div class="admin-top">
+        <div><h1 class="admin-page-titre">🎟️ Codes Promo</h1>
+        <p class="admin-page-sous">Créez des codes pour vos campagnes marketing</p></div>
+      </div>
+
+      <!-- Créer un code -->
+      <div class="admin-table-wrap" style="margin-bottom:20px">
+        <div class="admin-table-header"><h3>➕ Créer un code promo</h3></div>
+        <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
+          <div class="field-group">
+            <label class="field-lbl">Code *</label>
+            <input class="field-input" id="np-code" placeholder="Ex: ETE25" style="text-transform:uppercase">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Réduction (%)</label>
+            <input class="field-input" type="number" id="np-pct" placeholder="10" min="1" max="80">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Utilisations max</label>
+            <input class="field-input" type="number" id="np-max" placeholder="Vide = illimité">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Expire le</label>
+            <input class="field-input" type="date" id="np-expire">
+          </div>
+          <div class="field-group" style="grid-column:1/-1">
+            <label class="field-lbl">Description interne</label>
+            <input class="field-input" id="np-desc" placeholder="Ex: Campagne fête des mères 2025">
+          </div>
+          <div style="grid-column:1/-1">
+            <button class="btn-primaire" onclick="creerCodePromo()">✅ Créer ce code</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Liste des codes -->
+      <div class="admin-table-wrap">
+        <div class="admin-table-header"><h3>📋 Codes existants</h3></div>
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Code</th><th>Réduction</th><th>Utilisations</th>
+              <th>Expiration</th><th>Description</th><th>Statut</th><th>Action</th>
+            </tr></thead>
+            <tbody id="tbody-promos">
+              <tr><td colspan="7" style="text-align:center;padding:24px">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ SECTION AJOUT CLIENT MANUEL ══ -->
     <section id="sec-clients" class="admin-section">
       <div class="admin-top">
-        <div><h1 class="admin-page-titre">Registre Clients</h1></div>
-        <a class="btn-primaire" href="/admin/api/clients/export">📥 Exporter CSV</a>
+        <div><h1 class="admin-page-titre">👥 Registre Clients</h1></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-primaire" onclick="ouvrirModalClient()">+ Ajouter manuellement</button>
+          <a class="btn-primaire" href="/admin/api/clients/export" style="background:var(--vert)">📥 Exporter CSV</a>
+        </div>
       </div>
       <div class="admin-table-wrap">
         <div class="table-scroll">
@@ -301,6 +360,43 @@
   </div>
 </div>
 
+
+<!-- ══ MODAL AJOUT CLIENT MANUEL ══ -->
+<div class="modal-bg" id="modal-client-bg">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-header">
+      <h2>👤 Ajouter un client</h2>
+      <button onclick="fermerModalClient()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--brun-clair);margin-bottom:16px">
+        Pour les clients reçus par téléphone, WhatsApp ou en boutique physique.
+      </p>
+      <div class="field-row">
+        <div class="field-group"><label class="field-lbl">Prénom *</label><input class="field-input" id="mc-prenom" placeholder="Fatou"></div>
+        <div class="field-group"><label class="field-lbl">Nom</label><input class="field-input" id="mc-nom" placeholder="Koné"></div>
+      </div>
+      <div class="field-group"><label class="field-lbl">Téléphone *</label><input class="field-input" id="mc-tel" placeholder="+225 07 00 00 00 00" type="tel"></div>
+      <div class="field-group"><label class="field-lbl">Email</label><input class="field-input" id="mc-email" placeholder="Laisser vide si inconnu" type="email"></div>
+      <div class="field-group"><label class="field-lbl">Ce qui l'intéresse</label>
+        <select class="field-input" id="mc-interet">
+          <option value="tout">✨ Tout</option>
+          <option value="parfum">🌸 Parfums</option>
+          <option value="sac">👜 Sacs</option>
+          <option value="vetement">👗 Vêtements</option>
+          <option value="chaussure">👟 Chaussures</option>
+        </select>
+      </div>
+      <div class="field-group"><label class="field-lbl">Nombre de commandes déjà passées</label>
+        <input class="field-input" type="number" id="mc-cmds" placeholder="0" min="0" value="0">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-annuler" onclick="fermerModalClient()">Annuler</button>
+      <button class="btn-primaire" onclick="sauvegarderClientManuel()">✅ Enregistrer ce client</button>
+    </div>
+  </div>
+</div>
 <!-- Toast admin -->
 <div class="toast" id="toast" role="alert" aria-live="polite">
   <span id="toast-icone">✅</span>

@@ -440,3 +440,126 @@ document.addEventListener("DOMContentLoaded", () => {
     if(e.target === this) fermerModalProduit();
   });
 });
+
+
+// ── Codes Promo ──────────────────────────────────────────────
+async function chargerCodesPromo() {
+  try {
+    const rep   = await fetch("/admin/api/codes-promo");
+    const data  = await rep.json();
+    const tbody = document.getElementById("tbody-promos");
+    if(!tbody) return;
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td style="font-weight:800;color:var(--or-sombre);font-size:15px">${c.code}</td>
+        <td style="font-weight:700;color:var(--vert)">-${c.reduction_pct}%</td>
+        <td>${c.nb_utilisations}${c.max_utilisations ? " / "+c.max_utilisations : " / ∞"}</td>
+        <td>${c.expire_le}</td>
+        <td style="font-size:11px;color:var(--brun-clair)">${c.description}</td>
+        <td><span class="badge-statut ${c.valide?"s-ok":"s-warn"}">${c.valide?"✅ Actif":"⛔ Inactif"}</span></td>
+        <td>
+          ${c.actif ? `<button style="background:rgba(232,52,28,0.1);color:var(--rouge);border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer" onclick="desactiverCode(${c.id})">Désactiver</button>` : "—"}
+        </td>
+      </tr>`
+    ).join("") || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--brun-clair)">Aucun code promo — créez-en un ci-dessus</td></tr>`;
+  } catch(e) { console.error("Erreur codes promo:", e); }
+}
+
+async function creerCodePromo() {
+  const code = document.getElementById("np-code")?.value.trim().toUpperCase();
+  const pct  = document.getElementById("np-pct")?.value;
+  const max  = document.getElementById("np-max")?.value;
+  const exp  = document.getElementById("np-expire")?.value;
+  const desc = document.getElementById("np-desc")?.value.trim();
+
+  if(!code || !pct) { afficherToast("⚠️ Code et réduction obligatoires", "⚠️"); return; }
+
+  try {
+    const rep  = await fetch("/admin/api/code-promo/creer", {
+      method : "POST",
+      headers: {"Content-Type":"application/json"},
+      body   : JSON.stringify({
+        code, reduction_pct: pct,
+        max_utilisations: max || null,
+        expire_le: exp || null,
+        description: desc
+      })
+    });
+    const data = await rep.json();
+    if(data.succes) {
+      afficherToast(`✅ Code "${code}" créé (-${pct}%)`);
+      // Vider le formulaire
+      ["np-code","np-pct","np-max","np-expire","np-desc"].forEach(id => {
+        const el = document.getElementById(id);
+        if(el) el.value = "";
+      });
+      chargerCodesPromo();
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch(e) { afficherToast("❌ Erreur réseau", "❌"); }
+}
+
+async function desactiverCode(id) {
+  if(!confirm("Désactiver ce code promo ?")) return;
+  await fetch(`/admin/api/code-promo/desactiver/${id}`, {method:"POST"});
+  afficherToast("Code désactivé");
+  chargerCodesPromo();
+}
+
+// ── Client manuel ─────────────────────────────────────────────
+function ouvrirModalClient() {
+  document.getElementById("modal-client-bg").classList.add("show");
+  ["mc-prenom","mc-nom","mc-tel","mc-email"].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = "";
+  });
+  const cmds = document.getElementById("mc-cmds");
+  if(cmds) cmds.value = "0";
+}
+
+function fermerModalClient() {
+  document.getElementById("modal-client-bg").classList.remove("show");
+}
+
+async function sauvegarderClientManuel() {
+  const prenom = document.getElementById("mc-prenom")?.value.trim();
+  const tel    = document.getElementById("mc-tel")?.value.trim();
+
+  if(!prenom || !tel) {
+    afficherToast("⚠️ Prénom et téléphone obligatoires", "⚠️");
+    return;
+  }
+
+  try {
+    const rep  = await fetch("/admin/api/client/ajouter", {
+      method : "POST",
+      headers: {"Content-Type":"application/json"},
+      body   : JSON.stringify({
+        prenom,
+        nom          : document.getElementById("mc-nom")?.value.trim() || "",
+        telephone    : tel,
+        email        : document.getElementById("mc-email")?.value.trim() || "",
+        interet      : document.getElementById("mc-interet")?.value || "tout",
+        nb_commandes : parseInt(document.getElementById("mc-cmds")?.value || "0")
+      })
+    });
+    const data = await rep.json();
+    if(data.succes) {
+      fermerModalClient();
+      chargerTableClients();
+      afficherToast(`✅ ${prenom} ajouté au registre clients`);
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch(e) { afficherToast("❌ Erreur réseau", "❌"); }
+}
+
+// Mettre à jour adminSection pour charger les codes promo
+const _adminSectionOriginal = adminSection;
+// Étendre adminSection pour les nouvelles sections
+const adminSectionOriginal = adminSection;
+adminSection = function(section, btn) {
+  adminSectionOriginal(section, btn);
+  if(section === "promos")  chargerCodesPromo();
+  if(section === "clients") chargerTableClients();
+};

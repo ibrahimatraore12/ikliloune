@@ -260,3 +260,131 @@ def enregistrer_lead():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erreur": str(e)}), 500
+
+
+@admin_bp.route("/admin/api/client/ajouter", methods=["POST"])
+@login_required
+def ajouter_client_manuel():
+    """
+    Ajoute un client manuellement depuis l'admin.
+    Pour les clients reçus par téléphone, WhatsApp ou en boutique.
+    """
+    try:
+        data = request.get_json()
+
+        email = data.get("email", "").strip()
+
+        # Vérifier doublon si email fourni
+        if email and Client.query.filter_by(email=email).first():
+            return jsonify({"erreur": "Email déjà enregistré"}), 400
+
+        # Email fictif si non fourni (clients sans email)
+        if not email:
+            import time
+            email = f"client_{int(time.time())}@sans-email.ikliloune"
+
+        client = Client(
+            prenom       = data.get("prenom", "").strip(),
+            nom          = data.get("nom", "").strip(),
+            email        = email,
+            telephone    = data.get("telephone", "").strip(),
+            interet      = data.get("interet", "tout"),
+            source       = "manuel",   # saisie manuelle par l'admin
+            nb_commandes = int(data.get("nb_commandes", 0)),
+            consentement = True,
+            actif        = True
+        )
+        db.session.add(client)
+        db.session.commit()
+
+        print(f"✅ Client ajouté manuellement : {client.prenom} {client.nom}")
+        return jsonify({"succes": True, "client": client.vers_dict()})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erreur": str(e)}), 500
+
+
+@admin_bp.route("/admin/api/client/modifier/<int:cid>", methods=["POST"])
+@login_required
+def modifier_client(cid):
+    """Met à jour les infos d'un client."""
+    client = db.get_or_404(Client, cid)
+    try:
+        data = request.get_json()
+        client.prenom      = data.get("prenom", client.prenom)
+        client.nom         = data.get("nom", client.nom)
+        client.telephone   = data.get("telephone", client.telephone)
+        client.interet     = data.get("interet", client.interet)
+        client.nb_commandes = int(data.get("nb_commandes", client.nb_commandes))
+        client.actif       = data.get("actif", client.actif)
+        db.session.commit()
+        return jsonify({"succes": True, "client": client.vers_dict()})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erreur": str(e)}), 500
+
+
+# ── Codes Promo ────────────────────────────────────────────────
+
+@admin_bp.route("/admin/api/codes-promo")
+@login_required
+def api_codes_promo():
+    """Liste tous les codes promo."""
+    from backend.models.code_promo import CodePromo
+    codes = CodePromo.query.order_by(CodePromo.cree_le.desc()).all()
+    return jsonify([c.vers_dict() for c in codes])
+
+
+@admin_bp.route("/admin/api/code-promo/creer", methods=["POST"])
+@login_required
+def creer_code_promo():
+    """Crée un nouveau code promo."""
+    from backend.models.code_promo import CodePromo
+    from datetime import datetime
+    try:
+        data = request.get_json()
+        code_str = data.get("code", "").strip().upper()
+
+        if not code_str:
+            return jsonify({"erreur": "Code obligatoire"}), 400
+
+        if CodePromo.query.filter_by(code=code_str).first():
+            return jsonify({"erreur": "Ce code existe déjà"}), 400
+
+        # Parser la date d'expiration si fournie
+        expire = None
+        if data.get("expire_le"):
+            try:
+                expire = datetime.strptime(data["expire_le"], "%Y-%m-%d")
+            except:
+                pass
+
+        code = CodePromo(
+            code             = code_str,
+            description      = data.get("description", ""),
+            reduction_pct    = int(data.get("reduction_pct", 5)),
+            max_utilisations = int(data["max_utilisations"]) if data.get("max_utilisations") else None,
+            expire_le        = expire,
+            actif            = True
+        )
+        db.session.add(code)
+        db.session.commit()
+
+        print(f"✅ Code promo créé : {code.code} (-{code.reduction_pct}%)")
+        return jsonify({"succes": True, "code": code.vers_dict()})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"erreur": str(e)}), 500
+
+
+@admin_bp.route("/admin/api/code-promo/desactiver/<int:cid>", methods=["POST"])
+@login_required
+def desactiver_code_promo(cid):
+    """Désactive un code promo."""
+    from backend.models.code_promo import CodePromo
+    code = db.get_or_404(CodePromo, cid)
+    code.actif = False
+    db.session.commit()
+    return jsonify({"succes": True})

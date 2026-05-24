@@ -24,7 +24,8 @@ def initialiser_db(app):
         from backend.models.produit  import Produit   # noqa
         from backend.models.commande import Commande  # noqa
         from backend.models.client   import Client    # noqa
-        from backend.models.admin    import Admin     # noqa
+        from backend.models.admin      import Admin      # noqa
+        from backend.models.code_promo  import CodePromo  # noqa
 
         db.create_all()   # crée les tables si elles n'existent pas
 

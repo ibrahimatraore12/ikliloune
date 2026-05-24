@@ -86,3 +86,50 @@ def passer_commande():
         db.session.rollback()
         print(f"❌ Erreur commande : {e}")
         return jsonify({"erreur": str(e)}), 500
+
+
+@commande_bp.route("/api/verifier-promo", methods=["POST"])
+def verifier_code_promo():
+    """
+    Vérifie un code promo saisi par le client.
+    Appelé en temps réel quand le client tape son code.
+
+    Reçoit  : {"code": "ETE25"}
+    Retourne: {"valide": true, "reduction_pct": 10, "message": "Code valide !"}
+    """
+    from backend.models.code_promo import CodePromo
+
+    data = request.get_json()
+    code_str = data.get("code", "").strip().upper()
+
+    if not code_str:
+        return jsonify({"valide": False, "message": "Code vide"}), 400
+
+    # Codes fixes intégrés (toujours actifs)
+    codes_fixes = {
+        "IKLI5"     : 5,
+        "BIENVENUE" : 5,
+    }
+
+    if code_str in codes_fixes:
+        return jsonify({
+            "valide"       : True,
+            "reduction_pct": codes_fixes[code_str],
+            "message"      : f"✅ Code valide ! -{codes_fixes[code_str]}% appliqué"
+        })
+
+    # Chercher dans la base de données
+    code = CodePromo.query.filter_by(code=code_str).first()
+
+    if not code:
+        return jsonify({"valide": False, "message": "❌ Code inconnu"}), 200
+
+    valide, msg = code.est_valide()
+    if not valide:
+        return jsonify({"valide": False, "message": f"❌ {msg}"}), 200
+
+    return jsonify({
+        "valide"       : True,
+        "reduction_pct": code.reduction_pct,
+        "message"      : f"✅ -{code.reduction_pct}% appliqué — {code.description or ''}"
+    })

@@ -8,6 +8,7 @@ const ETAT = {
   produits     : [],     // tous les produits chargés depuis l'API
   panier       : [],     // articles dans le panier
   promoApplique: false,  // code promo actif ?
+  reductionPct : 5,      // pourcentage de réduction du code promo
   slideActuel  : 0,      // slide du carrousel actuellement affiché
   tickerPause  : false,  // ticker en pause ?
 };
@@ -272,7 +273,8 @@ function rendrePanier() {
 
   // Calculs
   const sousTotal = ETAT.panier.reduce((s,x) => s + x.prix_actuel * x.qty, 0);
-  const remise    = ETAT.promoApplique ? Math.round(sousTotal * 0.05) : 0;
+  const pct       = ETAT.reductionPct || 5;
+  const remise    = ETAT.promoApplique ? Math.round(sousTotal * pct / 100) : 0;
   const total     = sousTotal - remise;
 
   document.getElementById("panier-sous-total").textContent = formaterPrix(sousTotal);
@@ -325,13 +327,43 @@ function retirerDuPanier(id) {
   rendrePanier();
 }
 
-function appliquerPromo(code) {
-  const codesValides = ["IKLI5", "BIENVENUE"];
-  const actif = codesValides.includes(code.toUpperCase());
-  if(actif !== ETAT.promoApplique) {
+async function appliquerPromo(code) {
+  if(code.length < 3) {
+    // Réinitialiser si code trop court
+    if(ETAT.promoApplique) {
+      ETAT.promoApplique = false;
+      ETAT.reductionPct  = 5;
+      rendrePanier();
+    }
+    return;
+  }
+  try {
+    const rep  = await fetch("/api/verifier-promo", {
+      method : "POST",
+      headers: {"Content-Type":"application/json"},
+      body   : JSON.stringify({code: code})
+    });
+    const data = await rep.json();
+    if(data.valide) {
+      ETAT.promoApplique = true;
+      ETAT.reductionPct  = data.reduction_pct || 5;
+      rendrePanier();
+      afficherToast("🎉 " + data.message);
+    } else {
+      if(ETAT.promoApplique) {
+        ETAT.promoApplique = false;
+        ETAT.reductionPct  = 5;
+        rendrePanier();
+      }
+      if(code.length >= 4) afficherToast(data.message || "❌ Code invalide", "❌");
+    }
+  } catch(e) {
+    // Fallback codes fixes si réseau KO
+    const fixes = ["IKLI5","BIENVENUE"];
+    const actif = fixes.includes(code.toUpperCase());
     ETAT.promoApplique = actif;
+    ETAT.reductionPct  = 5;
     rendrePanier();
-    if(actif) afficherToast("🎉 Code promo appliqué ! -5% sur votre commande");
   }
 }
 
@@ -348,7 +380,8 @@ async function validerCommande() {
   if(!nom || !tel) { afficherToast("⚠️ Nom et téléphone obligatoires", "⚠️"); return; }
 
   const sousTotal = ETAT.panier.reduce((s,x) => s + x.prix_actuel * x.qty, 0);
-  const remise    = ETAT.promoApplique ? Math.round(sousTotal * 0.05) : 0;
+  const pct       = ETAT.reductionPct || 5;
+  const remise    = ETAT.promoApplique ? Math.round(sousTotal * pct / 100) : 0;
 
   const payload = {
     client_nom       : nom,
@@ -400,7 +433,8 @@ function commanderWhatsApp() {
   ).join("\n") || "Voir ma sélection";
 
   const sousTotal = ETAT.panier.reduce((s,x) => s + x.prix_actuel * x.qty, 0);
-  const remise    = ETAT.promoApplique ? Math.round(sousTotal * 0.05) : 0;
+  const pct       = ETAT.reductionPct || 5;
+  const remise    = ETAT.promoApplique ? Math.round(sousTotal * pct / 100) : 0;
   const total     = sousTotal - remise;
 
   const msg = encodeURIComponent(
