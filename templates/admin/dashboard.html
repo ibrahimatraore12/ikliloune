@@ -160,7 +160,7 @@
 
       <div class="graphiques-row">
         <div class="graphique-box" style="flex:1">
-          <h3>📊 Ventes mensuelles {{ "now"|strftime("%Y") if "now" else "" }}</h3>
+          <h3>📊 Ventes mensuelles {{ now.year if now else "" }}</h3>
           {% if graphique_ventes %}
           <img src="{{ graphique_ventes }}" alt="Ventes mensuelles" style="width:100%;border-radius:8px">
           {% else %}
