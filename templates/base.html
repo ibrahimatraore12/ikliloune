@@ -3,14 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="IKLILOUNE — La Maison du Chic. Parfums, sacs, vêtements et chaussures à Abidjan.">
+
+  <!-- ── SEO de base ─────────────────────────────────────── -->
+  <meta name="description" content="IKLILOUNE — La Maison du Chic. Parfums envoûtants, sacs de caractère, vêtements et chaussures à Abidjan. Collections Perles (Femme) et Corail (Homme).">
+  <meta name="keywords"    content="ikliloune, mode abidjan, parfum côte d'ivoire, sac luxe abidjan, boutique mode CI, perles femme, corail homme">
+  <meta name="author"      content="IKLILOUNE — La Maison du Chic">
+  <meta name="robots"      content="index, follow">
+  <link rel="canonical"    href="https://ikliloune.com/">
+
+  <!-- ── Open Graph (Facebook, WhatsApp, Instagram) ─────── -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://ikliloune.com/">
+  <meta property="og:title"       content="IKLILOUNE — La Maison du Chic">
+  <meta property="og:description" content="Parfums · Sacs · Vêtements · Chaussures. Collections Perles &amp; Corail à Abidjan. Paiement Mobile Money.">
+  <meta property="og:image"       content="https://ikliloune.com/static/images/og-image.jpg">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale"      content="fr_FR">
+  <meta property="og:site_name"   content="IKLILOUNE">
+
+  <!-- ── Twitter Card ────────────────────────────────────── -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="IKLILOUNE — La Maison du Chic">
+  <meta name="twitter:description" content="Parfums · Sacs · Vêtements · Chaussures à Abidjan.">
+  <meta name="twitter:image"       content="https://ikliloune.com/static/images/og-image.jpg">
+
   <title>{% block titre %}IKLILOUNE — La Maison du Chic{% endblock %}</title>
 
-  <!-- Fonts Google -->
+  <!-- ── Favicon ─────────────────────────────────────────── -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}" onerror="this.remove()">
+
+  <!-- ── Fonts Google ────────────────────────────────────── -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- CSS global -->
+  <!-- ── CSS global ──────────────────────────────────────── -->
   <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 
   {% block head_extra %}{% endblock %}
@@ -19,7 +47,7 @@
 
   {% block contenu %}{% endblock %}
 
-  <!-- JS global -->
+  <!-- ── JS global ───────────────────────────────────────── -->
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   {% block scripts_extra %}{% endblock %}
 

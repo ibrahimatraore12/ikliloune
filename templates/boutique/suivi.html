@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block titre %}Suivi de commande — IKLILOUNE{% endblock %}
+{% block body_class %}page-suivi{% endblock %}
+
+{% block contenu %}
+<nav class="navbar">
+  <a class="nav-logo" href="/">
+    <svg width="36" height="36" viewBox="0 0 38 38" fill="none">
+      <defs>
+        <radialGradient id="bgS" cx="38%" cy="32%" r="65%"><stop offset="0%" stop-color="#FAD4DC"/><stop offset="45%" stop-color="#F2AEBB"/><stop offset="100%" stop-color="#A85870"/></radialGradient>
+        <linearGradient id="orS" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F0C96B"/><stop offset="50%" stop-color="#C9922A"/><stop offset="100%" stop-color="#F0C96B"/></linearGradient>
+      </defs>
+      <circle cx="19" cy="19" r="18" fill="url(#bgS)"/>
+      <polygon points="19,8 29,14 19,20 9,14" fill="none" stroke="url(#orS)" stroke-width="1.5"/>
+      <polygon points="9,14 19,20 19,32 9,26"  fill="none" stroke="url(#orS)" stroke-width="1.5"/>
+      <polygon points="29,14 19,20 19,32 29,26" fill="none" stroke="url(#orS)" stroke-width="1.5"/>
+    </svg>
+    <div class="logo-textes">
+      <span class="logo-nom">IKLILOUNE</span>
+      <span class="logo-slogan">La Maison du Chic</span>
+    </div>
+  </a>
+  <a href="/" class="btn-retour-nav">&#8592; Retour boutique</a>
+</nav>
+
+<main class="suivi-main">
+  <div class="suivi-container">
+
+    <div class="suivi-header">
+      <div class="suivi-icon">📦</div>
+      <h1 class="suivi-titre">Suivi de commande</h1>
+      <p class="suivi-sous">Entrez votre numéro de commande et votre téléphone</p>
+    </div>
+
+    <!-- Formulaire de recherche -->
+    <div class="suivi-form-card" id="suivi-form-card">
+      <form class="suivi-form" onsubmit="rechercherCommande(event)">
+        <div class="form-groupe">
+          <label class="form-label">📦 Numéro de commande</label>
+          <input type="text" id="input-numero" class="form-input"
+                 placeholder="Ex : IK047-20260601" maxlength="20" required>
+          <small class="form-aide">Fourni dans votre message de confirmation</small>
+        </div>
+        <div class="form-groupe">
+          <label class="form-label">📞 Numéro de téléphone</label>
+          <input type="tel" id="input-telephone" class="form-input"
+                 placeholder="Ex : 07 48 95 69 59" required>
+          <small class="form-aide">Le téléphone utilisé lors de la commande</small>
+        </div>
+        <button type="submit" class="btn-suivi" id="btn-rechercher">
+          <span id="btn-texte">Rechercher ma commande →</span>
+          <span id="btn-loading" style="display:none">⏳ Recherche...</span>
+        </button>
+      </form>
+      <div id="suivi-erreur" class="suivi-erreur" style="display:none"></div>
+    </div>
+
+    <!-- Résultat -->
+    <div id="suivi-resultat" class="suivi-resultat-wrap" style="display:none">
+
+      <div class="commande-card">
+        <div class="commande-header">
+          <div>
+            <div class="commande-numero" id="res-numero"></div>
+            <div class="commande-date" id="res-date"></div>
+          </div>
+          <div class="commande-total" id="res-total"></div>
+        </div>
+      </div>
+
+      <div class="workflow-card">
+        <h2 class="workflow-titre">Statut de votre commande</h2>
+        <div class="workflow-barre" id="workflow-barre"></div>
+        <div class="statut-annule" id="statut-annule" style="display:none">
+          <span class="annule-badge">❌ Commande annulée</span>
+          <p>Contactez-nous pour plus d'informations.</p>
+        </div>
+      </div>
+
+      <div class="articles-card">
+        <h2 class="articles-titre">🛒 Articles commandés</h2>
+        <div id="res-articles" class="articles-liste"></div>
+        <div class="articles-total">
+          <div id="res-sous-total"></div>
+          <div id="res-remise" style="display:none"></div>
+          <div class="total-final" id="res-total-final"></div>
+        </div>
+      </div>
+
+      <div class="historique-card">
+        <h2 class="historique-titre">📋 Historique des statuts</h2>
+        <div id="res-historique" class="historique-liste"></div>
+      </div>
+
+      <div class="contact-suivi-card">
+        <p>❓ Une question sur votre commande ?</p>
+        <a id="lien-whatsapp-suivi" href="#" target="_blank" rel="noopener" class="btn-wa-suivi">
+          💬 Contacter IKLILOUNE sur WhatsApp
+        </a>
+      </div>
+
+      <button class="btn-nouvelle-recherche" onclick="nouvelleRecherche()">
+        ← Rechercher une autre commande
+      </button>
+    </div>
+
+  </div>
+</main>
+
+{% include "partials/footer.html" %}
+{% include "partials/whatsapp_flottant.html" %}
+
+<style>
+.btn-retour-nav{padding:8px 18px;background:var(--or);color:white;border-radius:20px;font-size:12px;font-weight:700;transition:var(--transition);}
+.btn-retour-nav:hover{background:var(--or-sombre);}
+.suivi-main{min-height:80vh;padding:40px 16px;background:var(--ivoire-2);}
+.suivi-container{max-width:680px;margin:0 auto;}
+.suivi-resultat-wrap{display:flex;flex-direction:column;gap:20px;}
+.suivi-header{text-align:center;padding:20px 0;}
+.suivi-icon{font-size:48px;margin-bottom:12px;}
+.suivi-titre{font-family:'Playfair Display',serif;font-size:28px;color:var(--noir-chaud);margin-bottom:8px;}
+.suivi-sous{color:var(--brun-clair);font-size:14px;}
+.suivi-form-card,.commande-card,.workflow-card,.articles-card,.historique-card,.contact-suivi-card{background:white;border-radius:16px;border:1px solid var(--border);padding:28px;box-shadow:0 2px 12px rgba(201,146,42,0.06);margin-top:20px;}
+.suivi-form{display:flex;flex-direction:column;gap:18px;}
+.form-groupe{display:flex;flex-direction:column;gap:6px;}
+.form-label{font-size:13px;font-weight:700;color:var(--brun);}
+.form-input{padding:12px 16px;border:2px solid var(--border);border-radius:10px;font-size:15px;font-family:'Nunito',sans-serif;transition:var(--transition);}
+.form-input:focus{outline:none;border-color:var(--or);box-shadow:0 0 0 3px rgba(201,146,42,0.1);}
+.form-aide{font-size:11px;color:var(--brun-clair);}
+.btn-suivi{background:var(--or);color:white;border:none;border-radius:12px;padding:14px;font-size:15px;font-weight:800;font-family:'Nunito',sans-serif;cursor:pointer;transition:var(--transition);}
+.btn-suivi:hover{background:var(--or-sombre);transform:translateY(-1px);}
+.suivi-erreur{background:#FFF3CD;border:1px solid #F0C96B;border-radius:10px;padding:14px;color:var(--or-sombre);font-size:14px;font-weight:600;margin-top:12px;}
+.commande-header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+.commande-numero{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--noir-chaud);}
+.commande-date{font-size:12px;color:var(--brun-clair);margin-top:4px;}
+.commande-total{font-size:20px;font-weight:800;color:var(--or);}
+.workflow-titre,.articles-titre,.historique-titre{font-family:'Playfair Display',serif;font-size:18px;margin-bottom:20px;color:var(--noir-chaud);}
+.workflow-barre{display:flex;align-items:flex-start;overflow-x:auto;padding:8px 0;}
+.workflow-etape{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:80px;position:relative;}
+.workflow-etape::after{content:'';position:absolute;top:20px;left:50%;width:100%;height:3px;background:var(--border);z-index:0;}
+.workflow-etape:last-child::after{display:none;}
+.etape-cercle{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid var(--border);background:white;z-index:1;position:relative;transition:all 0.4s;}
+.etape-label{font-size:10px;font-weight:700;color:var(--brun-clair);text-align:center;line-height:1.3;}
+.workflow-etape.active .etape-cercle{border-color:var(--or);background:var(--or);color:white;box-shadow:0 0 0 4px rgba(201,146,42,0.2);}
+.workflow-etape.active .etape-label{color:var(--or);}
+.workflow-etape.passe .etape-cercle{border-color:var(--vert);background:var(--vert);color:white;}
+.workflow-etape.passe .etape-label{color:var(--vert);}
+.workflow-etape.passe::after{background:var(--vert);}
+.statut-annule{text-align:center;padding:20px;}
+.annule-badge{background:#FEE2E2;color:var(--rouge);padding:8px 20px;border-radius:20px;font-weight:700;font-size:14px;display:inline-block;margin-bottom:10px;}
+.articles-liste{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.article-ligne{display:flex;align-items:center;gap:12px;padding:10px;background:var(--ivoire);border-radius:10px;}
+.article-photo{width:48px;height:48px;border-radius:8px;object-fit:cover;background:var(--border);flex-shrink:0;}
+.article-info{flex:1;}
+.article-nom{font-size:13px;font-weight:700;color:var(--noir-chaud);}
+.article-detail{font-size:11px;color:var(--brun-clair);}
+.article-prix{font-size:13px;font-weight:800;color:var(--or);}
+.articles-total{border-top:1px solid var(--border);padding-top:14px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+.total-ligne{font-size:13px;color:var(--brun-clair);}
+.total-remise{font-size:13px;color:var(--vert);font-weight:700;}
+.total-final{font-size:18px;font-weight:800;color:var(--or);}
+.historique-liste{display:flex;flex-direction:column;gap:12px;}
+.histo-item{display:flex;gap:12px;align-items:flex-start;}
+.histo-point{width:12px;height:12px;border-radius:50%;background:var(--or);margin-top:4px;flex-shrink:0;}
+.histo-statut{font-size:13px;font-weight:700;color:var(--noir-chaud);}
+.histo-date{font-size:11px;color:var(--brun-clair);}
+.histo-note{font-size:12px;color:var(--brun);margin-top:2px;font-style:italic;}
+.contact-suivi-card{text-align:center;background:linear-gradient(135deg,#F0FFF4,#DCFCE7);}
+.contact-suivi-card p{font-size:14px;color:var(--brun);margin-bottom:14px;}
+.btn-wa-suivi{display:inline-block;background:#25D366;color:white;padding:12px 24px;border-radius:12px;font-weight:800;font-size:14px;transition:var(--transition);}
+.btn-wa-suivi:hover{background:#128C7E;}
+.btn-nouvelle-recherche{background:transparent;border:2px solid var(--or);color:var(--or);border-radius:12px;padding:12px 24px;font-size:13px;font-weight:700;font-family:'Nunito',sans-serif;cursor:pointer;transition:var(--transition);margin-top:4px;}
+.btn-nouvelle-recherche:hover{background:var(--or);color:white;}
+@media(max-width:600px){.workflow-etape{min-width:60px;}.etape-label{font-size:9px;}}
+</style>
+
+<script>
+const ETAPES = [
+  {id:"recue",          emoji:"📬", label:"Reçue"},
+  {id:"confirmee",      emoji:"✅", label:"Confirmée"},
+  {id:"en_preparation", emoji:"🔄", label:"En préparation"},
+  {id:"expediee",       emoji:"🚚", label:"Expédiée"},
+  {id:"livree",         emoji:"🎉", label:"Livrée"},
+];
+
+async function rechercherCommande(event) {
+  event.preventDefault();
+  const numero    = document.getElementById("input-numero").value.trim().toUpperCase();
+  const telephone = document.getElementById("input-telephone").value.trim();
+  const btnTexte  = document.getElementById("btn-texte");
+  const btnLoad   = document.getElementById("btn-loading");
+  const erreurDiv = document.getElementById("suivi-erreur");
+
+  btnTexte.style.display  = "none";
+  btnLoad.style.display   = "inline";
+  erreurDiv.style.display = "none";
+
+  try {
+    const res  = await fetch(`/api/commandes/suivi?numero=${encodeURIComponent(numero)}&telephone=${encodeURIComponent(telephone)}`);
+    const data = await res.json();
+    if (!res.ok || data.erreur) { afficherErreur(data.erreur || "Commande introuvable."); return; }
+    afficherResultat(data.commande);
+  } catch(e) {
+    afficherErreur("Erreur de connexion. Veuillez réessayer.");
+  } finally {
+    btnTexte.style.display = "inline";
+    btnLoad.style.display  = "none";
+  }
+}
+
+function afficherErreur(msg) {
+  const div = document.getElementById("suivi-erreur");
+  div.textContent     = "❌ " + msg;
+  div.style.display   = "block";
+}
+
+function afficherResultat(cmd) {
+  document.getElementById("suivi-form-card").style.display  = "none";
+  document.getElementById("suivi-resultat").style.display   = "block";
+  document.getElementById("res-numero").textContent  = "Commande " + cmd.numero;
+  document.getElementById("res-date").textContent    = "Passée le " + cmd.cree_le;
+  document.getElementById("res-total").textContent   = formaterPrix(cmd.total);
+
+  construireWorkflow(cmd.statut, cmd.etape_workflow);
+
+  const artDiv = document.getElementById("res-articles");
+  artDiv.innerHTML = (cmd.articles || []).map(a => {
+    const photo = a.photo
+      ? `<img src="/static/images/produits/${a.photo}" class="article-photo" alt="${a.nom}" loading="lazy">`
+      : `<div class="article-photo" style="display:flex;align-items:center;justify-content:center;font-size:24px;">🛍️</div>`;
+    const detail = [a.coloris, a.taille].filter(Boolean).join(" · ");
+    return `<div class="article-ligne">${photo}<div class="article-info"><div class="article-nom">${a.nom}</div><div class="article-detail">${detail ? detail + " · " : ""}Qté : ${a.qty}</div></div><div class="article-prix">${formaterPrix((a.prix_actuel||0)*a.qty)}</div></div>`;
+  }).join("");
+
+  document.getElementById("res-sous-total").innerHTML = `<span class="total-ligne">Sous-total : ${formaterPrix(cmd.sous_total||cmd.total)}</span>`;
+  if (cmd.remise_montant > 0) {
+    document.getElementById("res-remise").style.display = "block";
+    document.getElementById("res-remise").innerHTML = `<span class="total-remise">🎁 Remise ${cmd.code_promo_utilise||""} : -${formaterPrix(cmd.remise_montant)}</span>`;
+  }
+  document.getElementById("res-total-final").textContent = "Total : " + formaterPrix(cmd.total);
+
+  const histDiv = document.getElementById("res-historique");
+  if (cmd.historique && cmd.historique.length) {
+    histDiv.innerHTML = cmd.historique.map(h => `<div class="histo-item"><div class="histo-point"></div><div class="histo-content"><div class="histo-statut">→ ${h.statut_apres}</div><div class="histo-date">${h.change_le}</div>${h.note ? `<div class="histo-note">${h.note}</div>` : ""}</div></div>`).join("");
+  } else {
+    histDiv.innerHTML = `<p style="color:var(--brun-clair);font-size:13px">Votre commande vient d'être reçue — l'historique se mettra à jour.</p>`;
+  }
+
+  const msg = encodeURIComponent(`Bonjour IKLILOUNE\nInformations sur ma commande *${cmd.numero}*. Merci !`);
+  document.getElementById("lien-whatsapp-suivi").href = `https://wa.me/2250104144141?text=${msg}`;
+}
+
+function construireWorkflow(statut, etapeIndex) {
+  const barre  = document.getElementById("workflow-barre");
+  const annule = document.getElementById("statut-annule");
+  if (statut === "annulee") { barre.style.display="none"; annule.style.display="block"; return; }
+  barre.innerHTML = ETAPES.map((e, i) => {
+    const cls = i < etapeIndex ? "passe" : (i === etapeIndex ? "active" : "");
+    return `<div class="workflow-etape ${cls}"><div class="etape-cercle">${i < etapeIndex ? "✓" : e.emoji}</div><div class="etape-label">${e.label}</div></div>`;
+  }).join("");
+}
+
+function nouvelleRecherche() {
+  document.getElementById("suivi-form-card").style.display  = "block";
+  document.getElementById("suivi-resultat").style.display   = "none";
+  document.getElementById("suivi-erreur").style.display     = "none";
+  document.getElementById("input-numero").value    = "";
+  document.getElementById("input-telephone").value = "";
+}
+
+function formaterPrix(n) { return (n||0).toLocaleString("fr-FR") + " FCFA"; }
+</script>
+{% endblock %}
