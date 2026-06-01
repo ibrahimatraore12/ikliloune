@@ -38,7 +38,7 @@ admin_bp = Blueprint("admin", __name__)
 # DASHBOARD PRINCIPAL
 # ══════════════════════════════════════════════════════════════
 
-@admin_bp.route(config.ADMIN_URL_DASHBOARD)
+@admin_bp.route("/" + config.ADMIN_URL_DASHBOARD)
 @login_required
 def tableau_de_bord():
     """

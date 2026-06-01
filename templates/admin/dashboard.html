@@ -5,97 +5,297 @@
 {% block contenu %}
 <div class="admin-layout">
 
-  <!-- Sidebar -->
+  <!-- ══════════════════════════════════════════════════════
+       SIDEBAR — Navigation principale de l'admin
+  ══════════════════════════════════════════════════════════ -->
   <aside class="admin-sidebar" id="admin-sidebar">
     <div class="sidebar-logo">
-      <span class="sidebar-logo-nom">IKLILOUNE</span>
-      <span class="sidebar-logo-role">Administration</span>
+      <!-- Mini logo SVG IKLILOUNE -->
+      <svg width="28" height="28" viewBox="0 0 44 44" fill="none" style="flex-shrink:0">
+        <circle cx="22" cy="22" r="21" fill="#1A1A2E"/>
+        <polygon points="22,9 33,16 22,23 11,16"  fill="none" stroke="#F0C96B" stroke-width="1.6" stroke-linejoin="round"/>
+        <polygon points="11,16 22,23 22,37 11,30" fill="none" stroke="#F0C96B" stroke-width="1.6" stroke-linejoin="round"/>
+        <polygon points="33,16 22,23 22,37 33,30" fill="none" stroke="#F0C96B" stroke-width="1.6" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <span class="sidebar-logo-nom">IKLILOUNE</span>
+        <span class="sidebar-logo-role">Administration</span>
+      </div>
     </div>
+
     <nav class="sidebar-nav">
       <button class="sbar-item active" onclick="adminSection('dashboard', this)">📊 Dashboard</button>
       <button class="sbar-item" onclick="adminSection('produits', this)">🏷️ Produits</button>
       <button class="sbar-item" onclick="adminSection('commandes', this)">📦 Commandes</button>
+      <button class="sbar-item" onclick="adminSection('bannieres', this)">🖼️ Bannières</button>
       <button class="sbar-item" onclick="adminSection('clients', this)">👥 Clients</button>
-      <button class="sbar-item" onclick="adminSection('marketing', this)">📣 Marketing</button>
       <button class="sbar-item" onclick="adminSection('promos', this)">🎟️ Codes Promo</button>
+      <button class="sbar-item" onclick="adminSection('stats', this)">📈 Statistiques</button>
       <div class="sidebar-sep"></div>
-      <a class="sbar-item" href="/" target="_blank">🏪 Voir la boutique</a>
-      <a class="sbar-item deconnexion" href="/admin/logout">�� Déconnexion</a>
+      <a class="sbar-item" href="/" target="_blank">🏪 Voir la boutique →</a>
+      <a class="sbar-item deconnexion" href="{{ url_for('auth.deconnexion') }}">🚪 Déconnexion</a>
     </nav>
   </aside>
 
-  <!-- Contenu principal -->
+  <!-- ══════════════════════════════════════════════════════
+       MAIN — Contenu principal
+  ══════════════════════════════════════════════════════════ -->
   <main class="admin-main">
 
-    <!-- ══ SECTION DASHBOARD ══ -->
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION DASHBOARD — KPIs + graphiques
+    ───────────────────────────────────────────────────────── -->
     <section id="sec-dashboard" class="admin-section active">
       <div class="admin-top">
         <div>
           <h1 class="admin-page-titre">Tableau de bord</h1>
-          <p class="admin-page-sous">IKLILOUNE · La Maison du Chic</p>
+          <p class="admin-page-sous">IKLILOUNE · La Maison du Chic · Abidjan</p>
         </div>
         <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter un article</button>
       </div>
 
-      <!-- KPIs -->
+      <!-- ── KPIs en temps réel ───────────────────────────── -->
       <div class="kpi-grille">
-        <div class="kpi"><div class="kpi-icone">��</div><div class="kpi-val">487 500</div><div class="kpi-lbl">CA du mois (FCFA)</div><div class="kpi-trend">▲ +12%</div></div>
-        <div class="kpi"><div class="kpi-icone">🏷️</div><div class="kpi-val">{{ kpis.nb_produits }}</div><div class="kpi-lbl">Articles actifs</div></div>
-        <div class="kpi"><div class="kpi-icone">📦</div><div class="kpi-val">{{ kpis.nb_commandes }}</div><div class="kpi-lbl">Commandes</div></div>
-        <div class="kpi"><div class="kpi-icone">👥</div><div class="kpi-val">{{ kpis.nb_clients }}</div><div class="kpi-lbl">Clients enregistrés</div></div>
-        <div class="kpi"><div class="kpi-icone">⚠️</div><div class="kpi-val">{{ kpis.ruptures }}</div><div class="kpi-lbl">Ruptures de stock</div></div>
+        <!-- CA du mois courant -->
+        <div class="kpi kpi-or">
+          <div class="kpi-icone">💰</div>
+          <div class="kpi-val">{{ '{:,}'.format(kpis.ca_mois|int).replace(',', ' ') }}</div>
+          <div class="kpi-lbl">CA du mois (FCFA)</div>
+          <div class="kpi-trend">Aujourd'hui : {{ '{:,}'.format(kpis.ca_jour|int).replace(',', ' ') }} FCFA</div>
+        </div>
+
+        <!-- Panier moyen -->
+        <div class="kpi">
+          <div class="kpi-icone">🛒</div>
+          <div class="kpi-val">{{ '{:,}'.format(kpis.panier_moyen|int).replace(',', ' ') }}</div>
+          <div class="kpi-lbl">Panier moyen (FCFA)</div>
+        </div>
+
+        <!-- Produits actifs -->
+        <div class="kpi">
+          <div class="kpi-icone">🏷️</div>
+          <div class="kpi-val">{{ kpis.nb_produits }}</div>
+          <div class="kpi-lbl">Articles actifs</div>
+        </div>
+
+        <!-- Commandes -->
+        <div class="kpi">
+          <div class="kpi-icone">📦</div>
+          <div class="kpi-val">{{ kpis.nb_commandes }}</div>
+          <div class="kpi-lbl">Commandes totales</div>
+          {% if kpis.commandes_recentes %}
+          <div class="kpi-trend kpi-new">+{{ kpis.commandes_recentes|length }} récentes</div>
+          {% endif %}
+        </div>
+
+        <!-- Clients -->
+        <div class="kpi">
+          <div class="kpi-icone">👥</div>
+          <div class="kpi-val">{{ kpis.nb_clients }}</div>
+          <div class="kpi-lbl">Clients enregistrés</div>
+        </div>
+
+        <!-- Ruptures de stock -->
+        <div class="kpi {% if kpis.ruptures > 0 %}kpi-alerte{% endif %}">
+          <div class="kpi-icone">⚠️</div>
+          <div class="kpi-val">{{ kpis.ruptures }}</div>
+          <div class="kpi-lbl">Ruptures de stock</div>
+          {% if kpis.ruptures > 0 %}
+          <div class="kpi-trend" style="color:#e74c3c">Réapprovisionner !</div>
+          {% endif %}
+        </div>
       </div>
 
-      <!-- Graphiques Matplotlib -->
+      <!-- ── Alertes stock (si produits en stock bas) ─────── -->
+      {% if kpis.alertes_stock %}
+      <div class="alerte-box">
+        <strong>⚠️ Stock bas — {{ kpis.alertes_stock|length }} article(s) à réapprovisionner :</strong>
+        <ul class="alerte-liste">
+          {% for a in kpis.alertes_stock %}
+          <li>
+            <strong>{{ a.nom }}</strong>
+            <span class="badge-stock-{{ a.indicateur }}">{{ a.stock }} restant(s)</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- ── Commandes récentes en attente ─────────────────── -->
+      {% if kpis.commandes_recentes %}
+      <div class="alerte-box alerte-info">
+        <strong>📦 {{ kpis.commandes_recentes|length }} commande(s) récente(s) à traiter :</strong>
+        <ul class="alerte-liste">
+          {% for c in kpis.commandes_recentes %}
+          <li>
+            <strong>{{ c.numero }}</strong> · {{ c.client_nom }}
+            · {{ '{:,}'.format(c.total).replace(',', ' ') }} FCFA
+            <button class="btn-mini" onclick="adminSection('commandes',null)">Voir →</button>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <!-- ── Graphiques ───────────────────────────────────── -->
       <div class="graphiques-row">
-        <div class="graphique-box">
-          <h3>Ventes mensuelles</h3>
-          <img src="{{ graphique_ventes }}" alt="Graphique ventes mensuelles" style="width:100%;border-radius:8px">
+        <div class="graphique-box" style="flex:2">
+          <h3>📈 Ventes des 30 derniers jours</h3>
+          {% if graphique_30j %}
+          <img src="{{ graphique_30j }}" alt="Ventes 30 jours" style="width:100%;border-radius:8px">
+          {% else %}
+          <p class="graph-vide">Aucune vente enregistrée pour le moment.</p>
+          {% endif %}
         </div>
-        <div class="graphique-box">
-          <h3>Répartition par catégorie</h3>
-          <img src="{{ graphique_cats }}" alt="Graphique catégories" style="width:100%;border-radius:8px">
+        <div class="graphique-box" style="flex:1">
+          <h3>🥧 Répartition par catégorie</h3>
+          {% if graphique_cats %}
+          <img src="{{ graphique_cats }}" alt="Répartition catégories" style="width:100%;border-radius:8px">
+          {% else %}
+          <p class="graph-vide">Aucune vente à afficher.</p>
+          {% endif %}
         </div>
       </div>
 
-      <!-- Tableau produits rapide -->
+      <div class="graphiques-row">
+        <div class="graphique-box" style="flex:1">
+          <h3>📊 Ventes mensuelles {{ "now"|strftime("%Y") if "now" else "" }}</h3>
+          {% if graphique_ventes %}
+          <img src="{{ graphique_ventes }}" alt="Ventes mensuelles" style="width:100%;border-radius:8px">
+          {% else %}
+          <p class="graph-vide">Aucune vente enregistrée cette année.</p>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- ── Tops produits ────────────────────────────────── -->
+      <div class="graphiques-row">
+        <div class="graphique-box" style="flex:1">
+          <h3>🏆 Top 5 — Plus commandés</h3>
+          {% if top_commandes %}
+          <table class="admin-table mini-table">
+            <thead><tr><th>#</th><th>Produit</th><th>Cmds</th><th>Prix</th></tr></thead>
+            <tbody>
+              {% for p in top_commandes %}
+              <tr>
+                <td style="font-weight:bold;color:var(--or)">{{ loop.index }}</td>
+                <td>{{ p.nom }}</td>
+                <td><span class="badge-or">{{ p.nb_commandes }}</span></td>
+                <td>{{ '{:,}'.format(p.prix).replace(',', ' ') }} FCFA</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="graph-vide">Pas encore de commandes.</p>
+          {% endif %}
+        </div>
+
+        <div class="graphique-box" style="flex:1">
+          <h3>👁️ Top 5 — Plus consultés</h3>
+          {% if top_consultes %}
+          <table class="admin-table mini-table">
+            <thead><tr><th>#</th><th>Produit</th><th>Vues</th></tr></thead>
+            <tbody>
+              {% for p in top_consultes %}
+              <tr>
+                <td style="font-weight:bold;color:var(--or)">{{ loop.index }}</td>
+                <td>{{ p.nom }}</td>
+                <td><span class="badge-bleu">{{ p.nb_consultations }}</span></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <p class="graph-vide">Aucune consultation enregistrée.</p>
+          {% endif %}
+        </div>
+      </div>
+
+    </section><!-- /sec-dashboard -->
+
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION PRODUITS — Catalogue complet
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-produits" class="admin-section">
+      <div class="admin-top">
+        <div>
+          <h1 class="admin-page-titre">🏷️ Gestion des Articles</h1>
+          <p class="admin-page-sous">Parfums · Sacs · Vêtements · Chaussures</p>
+        </div>
+        <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter un article</button>
+      </div>
+
       <div class="admin-table-wrap">
         <div class="admin-table-header">
-          <h3>Gestion des articles</h3>
-          <div style="display:flex;gap:8px">
-            <input class="admin-search" type="text" placeholder="Rechercher..."
-                   oninput="filtrerTableAdmin(this.value)">
-            <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter</button>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="admin-search" type="text" id="search-produits"
+                   placeholder="🔍 Rechercher un article..."
+                   oninput="filtrerTableAdmin('tbody-produits', this.value)">
+            <select class="admin-search" id="filtre-cat"
+                    onchange="filtrerTableAdmin('tbody-produits', document.getElementById('search-produits').value)">
+              <option value="">Toutes catégories</option>
+              <option value="parfum">Parfums</option>
+              <option value="sac">Sacs</option>
+              <option value="vetement">Vêtements</option>
+              <option value="chaussure">Chaussures</option>
+            </select>
           </div>
         </div>
         <div class="table-scroll">
           <table class="admin-table" id="table-produits">
             <thead><tr>
-              <th>Article</th><th>Catégorie</th><th>Genre</th>
-              <th>Prix</th><th>Stock</th><th>Statut</th><th>Actions</th>
+              <th>Photo</th><th>Référence</th><th>Article</th>
+              <th>Catégorie</th><th>Genre</th>
+              <th>Prix</th><th>Promo</th><th>Stock</th>
+              <th>Badge</th><th>Statut</th><th>Actions</th>
             </tr></thead>
             <tbody id="tbody-produits">
-              <tr><td colspan="7" style="text-align:center;padding:24px">Chargement...</td></tr>
+              <tr><td colspan="11" class="chargement-cell">Chargement des articles...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ══ SECTION COMMANDES ══ -->
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION COMMANDES — Suivi et statuts
+    ───────────────────────────────────────────────────────── -->
     <section id="sec-commandes" class="admin-section">
       <div class="admin-top">
-        <div><h1 class="admin-page-titre">Commandes</h1></div>
+        <div>
+          <h1 class="admin-page-titre">📦 Commandes</h1>
+          <p class="admin-page-sous">Cliquez sur une commande pour la détailler et changer son statut</p>
+        </div>
+        <div style="display:flex;gap:8px">
+          <a class="btn-primaire" href="/admin/api/export/commandes-excel"
+             style="background:var(--vert-dark,#1a7a4a)">📥 Export Excel</a>
+        </div>
       </div>
+
+      <!-- Filtres statuts -->
+      <div class="filtre-statuts">
+        <button class="filtre-btn active" onclick="filtrerCommandes('', this)">Toutes</button>
+        <button class="filtre-btn" onclick="filtrerCommandes('recue', this)">📬 Reçues</button>
+        <button class="filtre-btn" onclick="filtrerCommandes('confirmee', this)">✅ Confirmées</button>
+        <button class="filtre-btn" onclick="filtrerCommandes('en_preparation', this)">🔧 En préparation</button>
+        <button class="filtre-btn" onclick="filtrerCommandes('expediee', this)">🚚 Expédiées</button>
+        <button class="filtre-btn" onclick="filtrerCommandes('livree', this)">🎉 Livrées</button>
+        <button class="filtre-btn filtre-annulee" onclick="filtrerCommandes('annulee', this)">❌ Annulées</button>
+      </div>
+
       <div class="admin-table-wrap">
         <div class="table-scroll">
           <table class="admin-table" id="table-commandes">
             <thead><tr>
-              <th>Numéro</th><th>Client</th><th>Téléphone</th>
-              <th>Total</th><th>Paiement</th><th>Statut</th><th>Date</th><th>Actions</th>
+              <th>Numéro</th><th>Date</th><th>Client</th><th>Téléphone</th>
+              <th>Articles</th><th>Total</th><th>Canal</th><th>Statut</th><th>Actions</th>
             </tr></thead>
             <tbody id="tbody-commandes">
-              <tr><td colspan="8" style="text-align:center;padding:24px">Chargement...</td></tr>
+              <tr><td colspan="9" class="chargement-cell">Chargement des commandes...</td></tr>
             </tbody>
           </table>
         </div>
@@ -103,28 +303,107 @@
     </section>
 
 
-    <!-- ══ SECTION CODES PROMO ══ -->
-    <section id="sec-promos" class="admin-section">
+    <!-- ─────────────────────────────────────────────────────
+         SECTION BANNIÈRES — Carrousel d'accueil
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-bannieres" class="admin-section">
       <div class="admin-top">
-        <div><h1 class="admin-page-titre">🎟️ Codes Promo</h1>
-        <p class="admin-page-sous">Créez des codes pour vos campagnes marketing</p></div>
+        <div>
+          <h1 class="admin-page-titre">🖼️ Bannières</h1>
+          <p class="admin-page-sous">Gérez le carrousel de la page d'accueil · Tri par ordre d'affichage</p>
+        </div>
+        <button class="btn-primaire" onclick="ouvrirModalBanniere()">+ Nouvelle bannière</button>
       </div>
 
-      <!-- Créer un code -->
+      <div id="bannieres-liste" class="bannieres-grille">
+        <div class="chargement-cell" style="padding:40px;text-align:center">Chargement...</div>
+      </div>
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION CLIENTS — Registre complet
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-clients" class="admin-section">
+      <div class="admin-top">
+        <div><h1 class="admin-page-titre">👥 Registre Clients</h1></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn-primaire" onclick="ouvrirModalClient()">+ Ajouter manuellement</button>
+          <a class="btn-primaire" href="/admin/api/clients/export-csv"
+             style="background:var(--vert-dark,#1a7a4a)">📥 Export CSV</a>
+        </div>
+      </div>
+      <div class="admin-table-wrap">
+        <div class="admin-table-header">
+          <input class="admin-search" type="text" placeholder="🔍 Rechercher un client..."
+                 oninput="filtrerTableAdmin('tbody-clients', this.value)">
+        </div>
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Prénom</th><th>Nom</th><th>Téléphone</th><th>Email</th>
+              <th>Intérêt</th><th>Source</th><th>Cmds</th>
+              <th>Consentement</th><th>Inscrit le</th>
+            </tr></thead>
+            <tbody id="tbody-clients">
+              <tr><td colspan="9" class="chargement-cell">Chargement des clients...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION CODES PROMO
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-promos" class="admin-section">
+      <div class="admin-top">
+        <div>
+          <h1 class="admin-page-titre">🎟️ Codes Promo</h1>
+          <p class="admin-page-sous">Campagnes de réduction pour vos clients</p>
+        </div>
+      </div>
+
+      <!-- Formulaire création -->
       <div class="admin-table-wrap" style="margin-bottom:20px">
         <div class="admin-table-header"><h3>➕ Créer un code promo</h3></div>
         <div style="padding:20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px">
           <div class="field-group">
             <label class="field-lbl">Code *</label>
-            <input class="field-input" id="np-code" placeholder="Ex: ETE25" style="text-transform:uppercase">
+            <input class="field-input" id="np-code" placeholder="ETE2026"
+                   style="text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Type de réduction</label>
+            <select class="field-input" id="np-type">
+              <option value="pourcentage">% Pourcentage</option>
+              <option value="montant_fixe">FCFA Montant fixe</option>
+            </select>
           </div>
           <div class="field-group">
             <label class="field-lbl">Réduction (%)</label>
             <input class="field-input" type="number" id="np-pct" placeholder="10" min="1" max="80">
           </div>
           <div class="field-group">
+            <label class="field-lbl">Panier minimum (FCFA)</label>
+            <input class="field-input" type="number" id="np-min" placeholder="0 = aucun minimum">
+          </div>
+          <div class="field-group">
             <label class="field-lbl">Utilisations max</label>
             <input class="field-input" type="number" id="np-max" placeholder="Vide = illimité">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Conditions</label>
+            <select class="field-input" id="np-conditions">
+              <option value="tous">Tous les clients</option>
+              <option value="nouveaux_clients">Nouveaux clients uniquement</option>
+              <option value="evenement">Événement spécial</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Début</label>
+            <input class="field-input" type="date" id="np-debut">
           </div>
           <div class="field-group">
             <label class="field-lbl">Expire le</label>
@@ -132,7 +411,7 @@
           </div>
           <div class="field-group" style="grid-column:1/-1">
             <label class="field-lbl">Description interne</label>
-            <input class="field-input" id="np-desc" placeholder="Ex: Campagne fête des mères 2025">
+            <input class="field-input" id="np-desc" placeholder="Ex: Campagne fête des mères 2026">
           </div>
           <div style="grid-column:1/-1">
             <button class="btn-primaire" onclick="creerCodePromo()">✅ Créer ce code</button>
@@ -140,71 +419,81 @@
         </div>
       </div>
 
-      <!-- Liste des codes -->
+      <!-- Liste codes -->
       <div class="admin-table-wrap">
         <div class="admin-table-header"><h3>📋 Codes existants</h3></div>
         <div class="table-scroll">
           <table class="admin-table">
             <thead><tr>
-              <th>Code</th><th>Réduction</th><th>Utilisations</th>
-              <th>Expiration</th><th>Description</th><th>Statut</th><th>Action</th>
+              <th>Code</th><th>Type</th><th>Réduction</th><th>Min panier</th>
+              <th>Utilisations</th><th>Expiration</th><th>Description</th>
+              <th>Statut</th><th>Action</th>
             </tr></thead>
             <tbody id="tbody-promos">
-              <tr><td colspan="7" style="text-align:center;padding:24px">Chargement...</td></tr>
+              <tr><td colspan="9" class="chargement-cell">Chargement...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </section>
 
-    <!-- ══ SECTION AJOUT CLIENT MANUEL ══ -->
-    <section id="sec-clients" class="admin-section">
-      <div class="admin-top">
-        <div><h1 class="admin-page-titre">👥 Registre Clients</h1></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn-primaire" onclick="ouvrirModalClient()">+ Ajouter manuellement</button>
-          <a class="btn-primaire" href="/admin/api/clients/export" style="background:var(--vert)">📥 Exporter CSV</a>
-        </div>
-      </div>
-      <div class="admin-table-wrap">
-        <div class="table-scroll">
-          <table class="admin-table">
-            <thead><tr>
-              <th>Prénom</th><th>Nom</th><th>Email</th><th>Téléphone</th>
-              <th>Anniversaire</th><th>Adresse</th><th>Intérêt</th>
-              <th>Source</th><th>Cmds</th><th>Date</th>
-            </tr></thead>
-            <tbody id="tbody-clients">
-              <tr><td colspan="8" style="text-align:center;padding:24px">Chargement...</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </section>
 
-    <!-- ══ SECTION MARKETING ══ -->
-    <section id="sec-marketing" class="admin-section">
+    <!-- ─────────────────────────────────────────────────────
+         SECTION STATISTIQUES — Rapports et exports
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-stats" class="admin-section">
       <div class="admin-top">
-        <div><h1 class="admin-page-titre">Campagnes Marketing</h1></div>
+        <div>
+          <h1 class="admin-page-titre">📈 Statistiques & Exports</h1>
+          <p class="admin-page-sous">Rapports détaillés et exports Excel</p>
+        </div>
       </div>
-      <div class="marketing-cards">
-        <div class="marketing-card">
-          <h3>📢 Bandeau défilant</h3>
-          <p>Gérez les messages visibles sur le site en temps réel.</p>
-          <div id="ticker-admin-liste"></div>
-          <div class="ticker-form">
-            <input id="new-ticker" placeholder="Nouveau message...">
-            <select id="new-ticker-type">
-              <option value="normal">Normal</option>
-              <option value="promo">Promotion</option>
-              <option value="flash">Flash (clignotant)</option>
-            </select>
-            <button class="btn-primaire" onclick="ajouterTicker()">Ajouter</button>
+
+      <!-- Exports Excel -->
+      <div class="admin-table-wrap" style="margin-bottom:20px">
+        <div class="admin-table-header"><h3>📥 Télécharger des rapports Excel</h3></div>
+        <div style="padding:20px;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end">
+          <div class="field-group">
+            <label class="field-lbl">Année</label>
+            <input class="field-input" type="number" id="export-annee"
+                   value="{{ now.year if now else 2026 }}" min="2025" max="2030" style="width:100px">
           </div>
+          <a class="btn-primaire"
+             id="btn-export-ventes"
+             href="/admin/api/export/ventes-excel?annee=2026"
+             onclick="this.href='/admin/api/export/ventes-excel?annee='+document.getElementById('export-annee').value">
+            📊 Rapport ventes annuel (3 feuilles)
+          </a>
+          <a class="btn-primaire" href="/admin/api/export/commandes-excel"
+             style="background:#27ae60">📦 Toutes les commandes</a>
+          <a class="btn-primaire" href="/admin/api/export/commandes-excel?statut=livree"
+             style="background:#2980b9">✅ Commandes livrées</a>
+          <a class="btn-primaire" href="/admin/api/clients/export-csv"
+             style="background:#8e44ad">👥 Clients (CSV)</a>
         </div>
-        <div class="marketing-card">
-          <h3>📊 Statistiques clients</h3>
-          <div id="stats-clients">Chargement...</div>
+        <p style="padding:0 20px 16px;font-size:11px;color:var(--brun-clair)">
+          Les fichiers Excel contiennent : résumé mensuel CA, détail commandes, top produits.
+          Format compatible Microsoft Excel et LibreOffice Calc.
+        </p>
+      </div>
+
+      <!-- Graphique ventes mensuelles (re-affiché ici) -->
+      <div class="graphiques-row">
+        <div class="graphique-box" style="flex:1">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <h3>📊 Ventes mensuelles</h3>
+            <div style="display:flex;gap:8px">
+              <button class="btn-mini" onclick="chargerGraphiqueAnnee(this, -1)">◀ Préc.</button>
+              <span id="annee-graph-label" style="font-weight:bold;padding:4px 8px">2026</span>
+              <button class="btn-mini" onclick="chargerGraphiqueAnnee(this, +1)">Suiv. ▶</button>
+            </div>
+          </div>
+          {% if graphique_ventes %}
+          <img id="img-graph-ventes" src="{{ graphique_ventes }}" alt="Ventes mensuelles"
+               style="width:100%;border-radius:8px">
+          {% else %}
+          <p class="graph-vide">Aucune vente enregistrée.</p>
+          {% endif %}
         </div>
       </div>
     </section>
@@ -212,7 +501,10 @@
   </main>
 </div>
 
-<!-- ══ MODAL AJOUT / MODIFICATION PRODUIT ══ -->
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Ajout / Modification produit
+══════════════════════════════════════════════════════════════ -->
 <div class="modal-bg" id="modal-bg">
   <div class="modal-box">
     <div class="modal-header">
@@ -221,148 +513,413 @@
     </div>
     <div class="modal-body">
 
-      <!-- Upload photo -->
-      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('photo-input').click()">
+      <!-- Zone de dépôt / preview photo -->
+      <div class="upload-zone" id="upload-zone"
+           onclick="document.getElementById('photo-input').click()"
+           ondragover="event.preventDefault()" ondrop="dropPhoto(event)">
         <div class="upload-icone">📷</div>
-        <p><strong>Cliquez pour ajouter la photo</strong><br>JPG, PNG, WebP — Max 10 Mo</p>
+        <p><strong>Cliquez ou déposez la photo ici</strong><br>
+           JPG · PNG · WebP — Max 10 Mo — Auto-redimensionné en WebP 800×800px</p>
         <img id="photo-preview" style="display:none;max-height:140px;border-radius:8px;margin-top:8px">
-        <input type="file" id="photo-input" accept="image/*" style="display:none" onchange="previewPhoto(this)">
+        <input type="file" id="photo-input" accept="image/*"
+               style="display:none" onchange="previewPhoto(this)">
       </div>
 
-      <!-- Type d'article -->
+      <!-- Sélecteur type d'article -->
       <div class="field-group">
         <label class="field-lbl">Type d'article *</label>
         <div class="type-selector" id="type-selector">
-          <div class="type-btn" onclick="choisirType('parfum',this)"><div>🌸</div><div>Parfum</div></div>
-          <div class="type-btn" onclick="choisirType('sac',this)"><div>👜</div><div>Sac</div></div>
-          <div class="type-btn" onclick="choisirType('chaussure',this)"><div>👟</div><div>Chaussure</div></div>
-          <div class="type-btn" onclick="choisirType('vetement',this)"><div>👗</div><div>Vêtement</div></div>
+          <div class="type-btn" onclick="choisirType('parfum',this)">
+            <div>🌸</div><div>Parfum</div>
+          </div>
+          <div class="type-btn" onclick="choisirType('sac',this)">
+            <div>👜</div><div>Sac</div>
+          </div>
+          <div class="type-btn" onclick="choisirType('chaussure',this)">
+            <div>👟</div><div>Chaussure</div>
+          </div>
+          <div class="type-btn" onclick="choisirType('vetement',this)">
+            <div>👗</div><div>Vêtement</div>
+          </div>
+          <div class="type-btn" onclick="choisirType('accessoire',this)">
+            <div>💍</div><div>Accessoire</div>
+          </div>
         </div>
       </div>
 
       <!-- Champs communs -->
       <div class="field-row">
-        <div class="field-group"><label class="field-lbl">Nom *</label><input class="field-input" id="f-nom" placeholder="Ex: Rose d'Or"></div>
-        <div class="field-group"><label class="field-lbl">Genre</label>
+        <div class="field-group">
+          <label class="field-lbl">Nom de l'article *</label>
+          <input class="field-input" id="f-nom" placeholder="Ex: Rose d'Or Intense">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Collection (genre)</label>
           <select class="field-input" id="f-genre">
             <option value="femme">🫧 Perles · Femme</option>
             <option value="homme">🪸 Corail · Homme</option>
-            <option value="mixte">✨ Mixte</option>
+            <option value="mixte" selected>✨ Mixte</option>
           </select>
         </div>
       </div>
-      <div class="field-row">
-        <div class="field-group"><label class="field-lbl">Prix (FCFA) *</label><input class="field-input" type="number" id="f-prix" placeholder="28500"></div>
-        <div class="field-group"><label class="field-lbl">Prix promo</label><input class="field-input" type="number" id="f-prix-promo" placeholder="Laisser vide"></div>
-      </div>
-      <div class="field-row">
-        <div class="field-group"><label class="field-lbl">Stock *</label><input class="field-input" type="number" id="f-stock" placeholder="10" min="0"></div>
-        <div class="field-group"><label class="field-lbl">Badge</label>
-          <select class="field-input" id="f-badge">
-            <option value="">Aucun</option>
-            <option value="new">🟢 Nouveau</option>
-            <option value="promo">🔴 Promo</option>
-          </select>
-        </div>
-      </div>
-      <div class="field-group"><label class="field-lbl">Description</label><input class="field-input" id="f-desc" placeholder="Description courte..."></div>
 
-      <!-- Couleurs -->
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Prix public (FCFA) *</label>
+          <input class="field-input" type="number" id="f-prix" placeholder="28 500" min="0">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Prix promotionnel</label>
+          <input class="field-input" type="number" id="f-prix-promo"
+                 placeholder="Laisser vide si pas de promo" min="0">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Stock initial *</label>
+          <input class="field-input" type="number" id="f-stock" placeholder="10" min="0">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Badge affiché</label>
+          <select class="field-input" id="f-badge">
+            <option value="">Aucun badge</option>
+            <option value="nouveau">🟢 Nouveau</option>
+            <option value="best_seller">⭐ Best Seller</option>
+            <option value="promo">🔴 Promo</option>
+            <option value="exclusif">💎 Exclusif</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-lbl">Description courte</label>
+        <input class="field-input" id="f-desc" placeholder="Ex: Senteur oud & rose, tenue 12h...">
+      </div>
+
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Seuil stock bas (alerte rouge)</label>
+          <input class="field-input" type="number" id="f-seuil-bas" placeholder="{{ config.SEUIL_STOCK_BAS if config else 3 }}" min="0">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Seuil stock moyen (alerte orange)</label>
+          <input class="field-input" type="number" id="f-seuil-haut" placeholder="{{ config.SEUIL_STOCK_HAUT if config else 10 }}" min="0">
+        </div>
+      </div>
+
+      <!-- Couleurs disponibles (tags) -->
       <div class="field-group">
         <label class="field-lbl">Couleurs disponibles</label>
-        <div class="tags-wrap" id="tags-couleurs" onclick="document.getElementById('input-couleur').focus()">
-          <input class="tag-input" id="input-couleur" placeholder="Taper + Entrée" onkeydown="ajouterCouleurTag(event)">
+        <div class="tags-wrap" id="tags-couleurs"
+             onclick="document.getElementById('input-couleur').focus()">
+          <input class="tag-input" id="input-couleur"
+                 placeholder="Taper une couleur + Entrée"
+                 onkeydown="ajouterCouleurTag(event)">
         </div>
+        <!-- Palette rapide -->
         <div class="color-presets">
-          <div class="cp" style="background:#1a1a1a" onclick="ajouterCouleurVite('#1a1a1a','Noir')" title="Noir"></div>
-          <div class="cp" style="background:#ffffff;border:1px solid #ddd" onclick="ajouterCouleurVite('#ffffff','Blanc')" title="Blanc"></div>
-          <div class="cp" style="background:#C9922A" onclick="ajouterCouleurVite('#C9922A','Or')" title="Or"></div>
-          <div class="cp" style="background:#8B0000" onclick="ajouterCouleurVite('#8B0000','Bordeaux')" title="Bordeaux"></div>
-          <div class="cp" style="background:#1E3A5F" onclick="ajouterCouleurVite('#1E3A5F','Marine')" title="Marine"></div>
-          <div class="cp" style="background:#D2691E" onclick="ajouterCouleurVite('#D2691E','Caramel')" title="Caramel"></div>
-          <div class="cp" style="background:#E8341C" onclick="ajouterCouleurVite('#E8341C','Rouge')" title="Rouge"></div>
-          <div class="cp" style="background:#F2AEBB" onclick="ajouterCouleurVite('#F2AEBB','Rose')" title="Rose"></div>
+          <div class="cp" style="background:#1a1a1a"
+               onclick="ajouterCouleurVite('#1a1a1a','Noir')" title="Noir"></div>
+          <div class="cp" style="background:#ffffff;border:1px solid #ddd"
+               onclick="ajouterCouleurVite('#ffffff','Blanc')" title="Blanc"></div>
+          <div class="cp" style="background:#C9922A"
+               onclick="ajouterCouleurVite('#C9922A','Or')" title="Or"></div>
+          <div class="cp" style="background:#8B0000"
+               onclick="ajouterCouleurVite('#8B0000','Bordeaux')" title="Bordeaux"></div>
+          <div class="cp" style="background:#1E3A5F"
+               onclick="ajouterCouleurVite('#1E3A5F','Marine')" title="Marine"></div>
+          <div class="cp" style="background:#D2691E"
+               onclick="ajouterCouleurVite('#D2691E','Caramel')" title="Caramel"></div>
+          <div class="cp" style="background:#E8341C"
+               onclick="ajouterCouleurVite('#E8341C','Rouge')" title="Rouge"></div>
+          <div class="cp" style="background:#F2AEBB"
+               onclick="ajouterCouleurVite('#F2AEBB','Rose')" title="Rose"></div>
+          <div class="cp" style="background:#2ECC71"
+               onclick="ajouterCouleurVite('#2ECC71','Vert')" title="Vert"></div>
+          <div class="cp" style="background:#9B59B6"
+               onclick="ajouterCouleurVite('#9B59B6','Violet')" title="Violet"></div>
         </div>
       </div>
 
-      <!-- Champs dynamiques par type -->
-      <div id="champs-parfum"    class="champs-type" style="display:none">
+      <!-- ── Champs spécifiques par type ─────────────────── -->
+
+      <!-- PARFUM -->
+      <div id="champs-parfum" class="champs-type" style="display:none">
         <div class="field-row">
-          <div class="field-group"><label class="field-lbl">Contenance (ml)</label><input class="field-input" id="f-ml" placeholder="100"></div>
-          <div class="field-group"><label class="field-lbl">Famille olfactive</label>
+          <div class="field-group">
+            <label class="field-lbl">Contenance (ml)</label>
+            <input class="field-input" id="f-ml" placeholder="100">
+          </div>
+          <div class="field-group">
+            <label class="field-lbl">Famille olfactive</label>
             <select class="field-input" id="f-olfactif">
-              <option>Floral Oriental</option><option>Boisé</option><option>Fruité</option><option>Musqué</option><option>Aquatique</option>
+              <option>Floral Oriental</option>
+              <option>Boisé Ambré</option>
+              <option>Fruité Floral</option>
+              <option>Musqué</option>
+              <option>Aquatique</option>
+              <option>Épicé</option>
+              <option>Oud</option>
             </select>
           </div>
         </div>
-        <div class="field-group"><label class="field-lbl">Durée de tenue</label>
+        <div class="field-group">
+          <label class="field-lbl">Durée de tenue estimée</label>
           <select class="field-input" id="f-tenue">
-            <option>4-6 heures</option><option>6-8 heures</option><option>8-12 heures</option><option>+12 heures</option>
+            <option>4–6 heures</option>
+            <option>6–8 heures</option>
+            <option>8–12 heures</option>
+            <option>+12 heures</option>
           </select>
         </div>
       </div>
 
-      <div id="champs-sac"       class="champs-type" style="display:none">
+      <!-- SAC -->
+      <div id="champs-sac" class="champs-type" style="display:none">
         <div class="field-row">
-          <div class="field-group"><label class="field-lbl">Matière</label>
+          <div class="field-group">
+            <label class="field-lbl">Matière principale</label>
             <select class="field-input" id="f-matiere-sac">
-              <option>Cuir véritable</option><option>Cuir synthétique</option><option>Tissu</option><option>Raphia</option><option>Wax</option>
+              <option>Cuir véritable</option>
+              <option>Cuir synthétique</option>
+              <option>Tissu</option>
+              <option>Raphia</option>
+              <option>Wax</option>
+              <option>Paille</option>
             </select>
           </div>
-          <div class="field-group"><label class="field-lbl">Dimensions (L×H cm)</label><input class="field-input" id="f-dims" placeholder="35×25"></div>
+          <div class="field-group">
+            <label class="field-lbl">Dimensions (L×H cm)</label>
+            <input class="field-input" id="f-dims" placeholder="Ex: 35×25">
+          </div>
         </div>
       </div>
 
+      <!-- CHAUSSURE -->
       <div id="champs-chaussure" class="champs-type" style="display:none">
         <div class="field-group">
           <label class="field-lbl">Pointures disponibles</label>
-          <div class="tags-wrap" id="tags-pointures" onclick="document.getElementById('input-pointure').focus()">
-            <input class="tag-input" id="input-pointure" placeholder="Ex: 38, puis Entrée" onkeydown="ajouterPointureTag(event)">
+          <div class="tags-wrap" id="tags-pointures"
+               onclick="document.getElementById('input-pointure').focus()">
+            <input class="tag-input" id="input-pointure"
+                   placeholder="Ex: 38, puis Entrée"
+                   onkeydown="ajouterPointureTag(event)">
           </div>
           <div class="tailles-rapides">
             <span>Ajout rapide :</span>
-            <script>['35','36','37','38','39','40','41','42','43','44','45'].forEach(t=>document.write(`<button type="button" onclick="ajouterPointureVite('${t}')">${t}</button>`))</script>
+            <script>['35','36','37','38','39','40','41','42','43','44','45'].forEach(function(t){
+              document.write('<button type="button" onclick="ajouterPointureVite(\''+t+'\')">'+t+'</button>');
+            })</script>
           </div>
         </div>
         <div class="field-row">
-          <div class="field-group"><label class="field-lbl">Matière</label>
-            <select class="field-input" id="f-matiere-chaussure"><option>Cuir</option><option>Tissu</option><option>Synthétique</option></select>
+          <div class="field-group">
+            <label class="field-lbl">Matière semelle</label>
+            <select class="field-input" id="f-matiere-chaussure">
+              <option>Cuir</option><option>Tissu</option><option>Synthétique</option>
+            </select>
           </div>
-          <div class="field-group"><label class="field-lbl">Talon (cm)</label><input class="field-input" id="f-talon" placeholder="0 si plat"></div>
+          <div class="field-group">
+            <label class="field-lbl">Hauteur talon (cm)</label>
+            <input class="field-input" id="f-talon" placeholder="0 si chaussure plate">
+          </div>
         </div>
       </div>
 
-      <div id="champs-vetement"  class="champs-type" style="display:none">
+      <!-- VÊTEMENT -->
+      <div id="champs-vetement" class="champs-type" style="display:none">
         <div class="field-group">
           <label class="field-lbl">Tailles disponibles</label>
-          <div class="tags-wrap" id="tags-tailles" onclick="document.getElementById('input-taille').focus()">
-            <input class="tag-input" id="input-taille" placeholder="Ex: M, puis Entrée" onkeydown="ajouterTailleTag(event)">
+          <div class="tags-wrap" id="tags-tailles"
+               onclick="document.getElementById('input-taille').focus()">
+            <input class="tag-input" id="input-taille"
+                   placeholder="Ex: M, puis Entrée"
+                   onkeydown="ajouterTailleTag(event)">
           </div>
           <div class="tailles-rapides">
             <span>Ajout rapide :</span>
-            <script>['XS','S','M','L','XL','XXL','Unique'].forEach(t=>document.write(`<button type="button" onclick="ajouterTailleVite('${t}')">${t}</button>`))</script>
+            <script>['XS','S','M','L','XL','XXL','Unique'].forEach(function(t){
+              document.write('<button type="button" onclick="ajouterTailleVite(\''+t+'\')">'+t+'</button>');
+            })</script>
           </div>
         </div>
         <div class="field-row">
-          <div class="field-group"><label class="field-lbl">Tissu</label>
-            <select class="field-input" id="f-tissu"><option>Wax</option><option>Coton</option><option>Bazin</option><option>Soie</option><option>Lin</option></select>
+          <div class="field-group">
+            <label class="field-lbl">Tissu</label>
+            <select class="field-input" id="f-tissu">
+              <option>Wax</option><option>Coton</option><option>Bazin</option>
+              <option>Soie</option><option>Lin</option><option>Polyester</option>
+            </select>
           </div>
-          <div class="field-group"><label class="field-lbl">Type</label>
-            <select class="field-input" id="f-type-vet"><option>Robe</option><option>Boubou</option><option>Chemise</option><option>Pantalon</option><option>Ensemble</option></select>
+          <div class="field-group">
+            <label class="field-lbl">Type de vêtement</label>
+            <select class="field-input" id="f-type-vet">
+              <option>Robe</option><option>Boubou</option><option>Kaftan</option>
+              <option>Chemise</option><option>Pantalon</option><option>Ensemble</option>
+              <option>Veste</option><option>Jupe</option>
+            </select>
           </div>
         </div>
       </div>
 
-    </div>
+      <!-- En vedette toggle -->
+      <div class="field-group" style="display:flex;align-items:center;gap:10px;margin-top:8px">
+        <input type="checkbox" id="f-vedette" style="width:18px;height:18px">
+        <label for="f-vedette" class="field-lbl" style="margin:0">
+          ⭐ Mettre en vedette (affiché en priorité sur la boutique)
+        </label>
+      </div>
+
+      <!-- ID caché pour l'édition -->
+      <input type="hidden" id="f-id">
+
+    </div><!-- /modal-body -->
+
     <div class="modal-footer">
       <button class="btn-annuler" onclick="fermerModalProduit()">Annuler</button>
-      <button class="btn-primaire" onclick="sauvegarderProduit()">✅ Enregistrer</button>
+      <button class="btn-primaire" id="btn-sauvegarder-produit"
+              onclick="sauvegarderProduit()">✅ Enregistrer l'article</button>
+    </div>
+  </div>
+</div><!-- /modal-bg -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Détail commande + changement statut
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-commande-bg">
+  <div class="modal-box" style="max-width:680px">
+    <div class="modal-header">
+      <h2 id="modal-commande-titre">Détail commande</h2>
+      <button onclick="fermerModalCommande()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body" id="modal-commande-corps">
+      <!-- Rempli dynamiquement par JS -->
+    </div>
+
+    <!-- Panneau de changement de statut -->
+    <div style="padding:16px 20px;background:var(--bg-sombre,#f8f9fa);border-top:1px solid #eee">
+      <h4 style="margin:0 0 12px;font-size:13px">🔄 Changer le statut</h4>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select class="field-input" id="nouveau-statut" style="flex:1;min-width:160px">
+          <option value="recue">📬 Reçue</option>
+          <option value="confirmee">✅ Confirmée</option>
+          <option value="en_preparation">🔧 En préparation</option>
+          <option value="expediee">🚚 Expédiée</option>
+          <option value="livree">🎉 Livrée</option>
+          <option value="annulee">❌ Annulée</option>
+        </select>
+        <input class="field-input" id="note-statut"
+               placeholder="Note interne (facultatif)" style="flex:2;min-width:200px">
+        <button class="btn-primaire" onclick="changerStatutCommande()">Mettre à jour</button>
+      </div>
+
+      <!-- Zone notification WhatsApp (affichée après changement) -->
+      <div id="wa-notif-zone" style="display:none;margin-top:12px;padding:12px;background:#dcfce7;border-radius:8px">
+        <p style="margin:0 0 8px;font-size:12px;color:#166534">
+          ✅ Statut mis à jour. Notifiez le client sur WhatsApp :
+        </p>
+        <a id="wa-notif-lien" href="#" target="_blank" rel="noopener"
+           class="btn-primaire" style="background:#25D366;display:inline-flex;align-items:center;gap:8px">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+          </svg>
+          Envoyer la notification WhatsApp
+        </a>
+        <p id="wa-notif-preview" style="margin:8px 0 0;font-size:11px;color:#4a5568;font-style:italic"></p>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-annuler" onclick="fermerModalCommande()">Fermer</button>
     </div>
   </div>
 </div>
 
 
-<!-- ══ MODAL AJOUT CLIENT MANUEL ══ -->
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Création / Modification bannière
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-banniere-bg">
+  <div class="modal-box" style="max-width:560px">
+    <div class="modal-header">
+      <h2 id="modal-banniere-titre">Nouvelle bannière</h2>
+      <button onclick="fermerModalBanniere()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label class="field-lbl">Titre principal *</label>
+        <input class="field-input" id="b-titre" placeholder="Nouvelle collection Perles 2026">
+      </div>
+      <div class="field-group">
+        <label class="field-lbl">Sous-titre</label>
+        <input class="field-input" id="b-sous-titre" placeholder="Parfums, sacs et accessoires de prestige">
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Texte du bouton</label>
+          <input class="field-input" id="b-btn-texte" placeholder="Découvrir" value="Découvrir">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Lien du bouton</label>
+          <input class="field-input" id="b-btn-lien" placeholder="/catalogue?genre=femme" value="/">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Collection cible</label>
+          <select class="field-input" id="b-collection">
+            <option value="les-deux">✨ Les deux</option>
+            <option value="perles">🫧 Perles · Femme</option>
+            <option value="corail">🪸 Corail · Homme</option>
+          </select>
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Style visuel</label>
+          <select class="field-input" id="b-style">
+            <option value="clair">☀️ Clair</option>
+            <option value="sombre">🌙 Sombre</option>
+            <option value="or">✨ Or & Luxe</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Emoji décoratif</label>
+          <input class="field-input" id="b-emoji" placeholder="🌸" style="font-size:18px" maxlength="4">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Ordre d'affichage</label>
+          <input class="field-input" type="number" id="b-ordre" placeholder="1" min="1">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Date de début</label>
+          <input class="field-input" type="date" id="b-debut">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Date de fin</label>
+          <input class="field-input" type="date" id="b-fin">
+        </div>
+      </div>
+      <p style="font-size:11px;color:var(--brun-clair);margin-top:4px">
+        💡 Laisser les dates vides = bannière permanente
+      </p>
+      <input type="hidden" id="b-id">
+    </div>
+    <div class="modal-footer">
+      <button class="btn-annuler" onclick="fermerModalBanniere()">Annuler</button>
+      <button class="btn-primaire" onclick="sauvegarderBanniere()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Ajout client manuel
+══════════════════════════════════════════════════════════════ -->
 <div class="modal-bg" id="modal-client-bg">
   <div class="modal-box" style="max-width:480px">
     <div class="modal-header">
@@ -372,14 +929,28 @@
     <div class="modal-body">
       <p style="font-size:12px;color:var(--brun-clair);margin-bottom:16px">
         Pour les clients reçus par téléphone, WhatsApp ou en boutique physique.
+        Le téléphone est l'identifiant principal.
       </p>
       <div class="field-row">
-        <div class="field-group"><label class="field-lbl">Prénom *</label><input class="field-input" id="mc-prenom" placeholder="Fatou"></div>
-        <div class="field-group"><label class="field-lbl">Nom</label><input class="field-input" id="mc-nom" placeholder="Koné"></div>
+        <div class="field-group">
+          <label class="field-lbl">Prénom *</label>
+          <input class="field-input" id="mc-prenom" placeholder="Fatou">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Nom</label>
+          <input class="field-input" id="mc-nom" placeholder="Koné">
+        </div>
       </div>
-      <div class="field-group"><label class="field-lbl">Téléphone *</label><input class="field-input" id="mc-tel" placeholder="+225 07 00 00 00 00" type="tel"></div>
-      <div class="field-group"><label class="field-lbl">Email</label><input class="field-input" id="mc-email" placeholder="Laisser vide si inconnu" type="email"></div>
-      <div class="field-group"><label class="field-lbl">Ce qui l'intéresse</label>
+      <div class="field-group">
+        <label class="field-lbl">Téléphone * (identifiant principal)</label>
+        <input class="field-input" id="mc-tel" placeholder="+225 07 00 00 00 00" type="tel">
+      </div>
+      <div class="field-group">
+        <label class="field-lbl">Email (facultatif)</label>
+        <input class="field-input" id="mc-email" placeholder="Laisser vide si inconnu" type="email">
+      </div>
+      <div class="field-group">
+        <label class="field-lbl">Ce qui l'intéresse</label>
         <select class="field-input" id="mc-interet">
           <option value="tout">✨ Tout</option>
           <option value="parfum">🌸 Parfums</option>
@@ -388,17 +959,9 @@
           <option value="chaussure">👟 Chaussures</option>
         </select>
       </div>
-      <div class="field-group"><label class="field-lbl">Adresse / Quartier</label>
-        <input class="field-input" id="mc-adresse" placeholder="Ex: Cocody, Abidjan">
-      </div>
-      <div class="field-row">
-        <div class="field-group"><label class="field-lbl">Date de naissance</label>
-          <input class="field-input" type="date" id="mc-naissance">
-          <small style="font-size:10px;color:var(--brun-clair)">Facultatif — pour les offres anniversaire 🎂</small>
-        </div>
-        <div class="field-group"><label class="field-lbl">Commandes déjà passées</label>
-          <input class="field-input" type="number" id="mc-cmds" placeholder="0" min="0" value="0">
-        </div>
+      <div class="field-group">
+        <label class="field-lbl">Adresse / Quartier</label>
+        <input class="field-input" id="mc-adresse" placeholder="Cocody, Abidjan">
       </div>
     </div>
     <div class="modal-footer">
@@ -407,7 +970,11 @@
     </div>
   </div>
 </div>
-<!-- Toast admin -->
+
+
+<!-- ══════════════════════════════════════════════════════════
+     TOAST — Notifications flottantes
+══════════════════════════════════════════════════════════════ -->
 <div class="toast" id="toast" role="alert" aria-live="polite">
   <span id="toast-icone">✅</span>
   <span id="toast-msg">Message</span>

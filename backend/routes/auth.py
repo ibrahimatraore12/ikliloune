@@ -66,7 +66,7 @@ def login():
 
 @auth_bp.route(f"/{config.ADMIN_URL_LOGOUT}")
 @login_required
-def logout():
+def deconnexion():
     """Déconnecte l'admin et redirige vers la page de login."""
     logout_user()
     return redirect(url_for("auth.login"))

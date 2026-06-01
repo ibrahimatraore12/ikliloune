@@ -1,399 +1,1099 @@
 // =============================================================
-// admin.js — JavaScript du dashboard admin IKLILOUNE
-// Gère : navigation, tables, modal produit, marketing
+// admin.js — Dashboard admin IKLILOUNE
+// Gère : navigation, tables produits/commandes/clients,
+//        modal produit/commande/bannière, codes promo, export
+// Philosophie : 1 fonction = 1 responsabilité (Regis N'guessan)
 // =============================================================
 
-// ── État global admin ─────────────────────────────────────────
+"use strict";
+
+// ── État global ───────────────────────────────────────────────
 const ADMIN = {
-  typeProduit  : null,   // type sélectionné dans le modal
-  editId       : null,   // ID du produit en cours de modification
-  couleurs     : [],     // couleurs sélectionnées
-  pointures    : [],     // pointures sélectionnées (chaussures)
-  tailles      : [],     // tailles sélectionnées (vêtements)
+  typeProduit    : null,   // type sélectionné dans le modal produit
+  editId         : null,   // ID produit en cours d'édition (null = création)
+  couleurs       : [],     // couleurs sélectionnées
+  pointures      : [],     // pointures (chaussures)
+  tailles        : [],     // tailles (vêtements)
+  commandeId     : null,   // ID commande ouverte dans le modal
+  banniereSec    : false,  // section bannières chargée
 };
 
-// ── Toast (réutilise la même fonction que boutique) ───────────
-let toastTimer;
+// ── Libellés et styles par statut de commande ────────────────
+const STATUTS_COMMANDE = {
+  recue          : { label: "📬 Reçue",          classe: "s-info" },
+  confirmee      : { label: "✅ Confirmée",       classe: "s-ok"   },
+  en_preparation : { label: "🔧 En préparation",  classe: "s-warn" },
+  expediee       : { label: "🚚 Expédiée",        classe: "s-info" },
+  livree         : { label: "🎉 Livrée",          classe: "s-ok"   },
+  annulee        : { label: "❌ Annulée",         classe: "s-err"  },
+};
+
+
+// ══════════════════════════════════════════════════════════════
+// UTILITAIRES
+// ══════════════════════════════════════════════════════════════
+
+/** Affiche un toast de notification (succès, erreur, avertissement). */
+let _toastTimer;
 function afficherToast(msg, icone = "✅") {
   const t = document.getElementById("toast");
-  if(!t) return;
-  document.getElementById("toast-msg").textContent = msg;
+  if (!t) return;
   document.getElementById("toast-icone").textContent = icone;
+  document.getElementById("toast-msg").textContent   = msg;
   t.classList.add("visible");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => t.classList.remove("visible"), 3500);
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove("visible"), 3500);
 }
 
-// ── Navigation entre sections ────────────────────────────────
-function adminSection(section, btn) {
-  document.querySelectorAll(".sbar-item").forEach(b => b.classList.remove("active"));
-  btn.classList.add("active");
-  document.querySelectorAll(".admin-section").forEach(s => s.classList.remove("active"));
-  const sec = document.getElementById("sec-" + section);
-  if(sec) sec.classList.add("active");
-
-  // Charger les données selon la section
-  if(section === "produits")  chargerTableProduits();
-  if(section === "commandes") chargerTableCommandes();
-  if(section === "clients")   chargerTableClients();
-  if(section === "marketing") chargerStatsClients();
-}
-
-// ── Formatage prix ────────────────────────────────────────────
+/** Formate un entier en prix FCFA localisé. Ex: 28500 → "28 500 FCFA" */
 function formaterPrix(n) {
-  return new Intl.NumberFormat("fr-CI").format(n) + " FCFA";
+  return new Intl.NumberFormat("fr-CI").format(n || 0) + " FCFA";
 }
 
-// ── Table produits ────────────────────────────────────────────
-async function chargerTableProduits() {
-  try {
-    const rep  = await fetch("/admin/api/produits");
-    const data = await rep.json();
-    const tbody = document.getElementById("tbody-produits");
-    if(!tbody) return;
-    tbody.innerHTML = data.map(p => `
-      <tr>
-        <td>
-          <div style="display:flex;align-items:center;gap:10px">
-            <div style="width:36px;height:36px;border-radius:8px;background:var(--ivoire);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
-              ${p.photo
-                ? `<img src="/static/images/produits/${p.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:8px" alt="${p.nom}">`
-                : ({parfum:"🌸",sac:"👜",chaussure:"👟",vetement:"👗"}[p.categorie]||"📦")}
-            </div>
-            <div>
-              <div style="font-weight:700;font-size:12px">${p.nom}</div>
-              <div style="font-size:10px;color:var(--brun-clair)">${p.description?.slice(0,40) || ""}...</div>
-            </div>
-          </div>
-        </td>
-        <td>${{parfum:"Parfum",sac:"Sac",chaussure:"Chaussure",vetement:"Vêtement"}[p.categorie]||p.categorie}</td>
-        <td>${{femme:"🫧 Femme",homme:"🪸 Homme",mixte:"✨ Mixte"}[p.genre]||p.genre}</td>
-        <td style="font-weight:700;color:var(--or-sombre)">${formaterPrix(p.prix_actuel)}</td>
-        <td><span class="badge-statut ${p.stock>5?"s-ok":p.stock>0?"s-warn":"s-info"}">${p.stock > 0 ? p.stock+" unités" : "Rupture"}</span></td>
-        <td><span class="badge-statut ${p.actif?"s-ok":"s-info"}">${p.actif?"Actif":"Inactif"}</span></td>
-        <td>
-          <div style="display:flex;gap:6px">
-            <button class="btn-primaire" style="padding:5px 10px;font-size:10px" onclick="editerProduit(${p.id})">✏️</button>
-            <button style="background:rgba(232,52,28,0.1);color:var(--rouge);border:none;border-radius:20px;padding:5px 10px;font-size:10px;font-weight:800;cursor:pointer" onclick="supprimerProduit(${p.id},'${p.nom}')">🗑️</button>
-          </div>
-        </td>
-      </tr>`
-    ).join("") || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--brun-clair)">Aucun article</td></tr>`;
-  } catch(e) { console.error("Erreur chargement produits:", e); }
-}
-
-function filtrerTableAdmin(q) {
-  const rows = document.querySelectorAll("#tbody-produits tr");
-  rows.forEach(row => {
-    const txt = row.textContent.toLowerCase();
-    row.style.display = txt.includes(q.toLowerCase()) ? "" : "none";
+/** Formate une date ISO en chaîne lisible. */
+function formaterDate(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit"
   });
 }
 
-async function supprimerProduit(id, nom) {
-  if(!confirm(`Retirer "${nom}" du catalogue ?`)) return;
-  try {
-    await fetch(`/admin/api/produit/supprimer/${id}`, { method:"DELETE" });
-    afficherToast(`🗑️ "${nom}" retiré du catalogue`);
-    chargerTableProduits();
-  } catch(e) { afficherToast("❌ Erreur", "❌"); }
+/**
+ * Filtre les lignes d'un <tbody> selon une chaîne de recherche.
+ * @param {string} tbodyId - ID du tbody à filtrer
+ * @param {string} q       - Texte de recherche
+ */
+function filtrerTableAdmin(tbodyId, q) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const terme = (q || "").toLowerCase();
+  Array.from(tbody.querySelectorAll("tr")).forEach(row => {
+    row.style.display = row.textContent.toLowerCase().includes(terme) ? "" : "none";
+  });
 }
 
+/**
+ * Filtre les lignes du tableau commandes par statut.
+ * @param {string} statut - Statut à afficher ("" = tous)
+ * @param {HTMLElement} btn - Bouton actif (pour le style)
+ */
+function filtrerCommandes(statut, btn) {
+  // Mettre à jour le bouton actif
+  document.querySelectorAll(".filtre-btn").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+
+  const rows = document.querySelectorAll("#tbody-commandes tr");
+  rows.forEach(row => {
+    if (!statut) {
+      row.style.display = "";
+    } else {
+      // Le statut est stocké dans data-statut sur chaque TR
+      row.style.display = (row.dataset.statut === statut) ? "" : "none";
+    }
+  });
+}
+
+/** Sélecteur d'emoji pour le label de catégorie produit. */
+function iconeCategorie(cat) {
+  return { parfum: "🌸", sac: "👜", chaussure: "👟", vetement: "👗", accessoire: "💍" }[cat] || "📦";
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// NAVIGATION ENTRE SECTIONS
+// ══════════════════════════════════════════════════════════════
+
+/**
+ * Affiche la section demandée et charge ses données si nécessaire.
+ * @param {string} section - Nom de la section (dashboard, produits, commandes...)
+ * @param {HTMLElement|null} btn - Bouton sidebar cliqué
+ */
+function adminSection(section, btn) {
+  // Mettre à jour le bouton actif dans la sidebar
+  if (btn) {
+    document.querySelectorAll(".sbar-item").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  }
+
+  // Afficher la bonne section
+  document.querySelectorAll(".admin-section").forEach(s => s.classList.remove("active"));
+  const sec = document.getElementById("sec-" + section);
+  if (sec) sec.classList.add("active");
+
+  // Charger les données à la demande
+  switch (section) {
+    case "produits":  chargerTableProduits();  break;
+    case "commandes": chargerTableCommandes(); break;
+    case "clients":   chargerTableClients();   break;
+    case "bannieres": chargerBannieres();       break;
+    case "promos":    chargerCodesPromo();      break;
+    case "stats":     /* graphiques déjà rendus côté serveur */ break;
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// TABLE PRODUITS
+// ══════════════════════════════════════════════════════════════
+
+/** Charge et affiche tous les produits dans le tableau admin. */
+async function chargerTableProduits() {
+  const tbody = document.getElementById("tbody-produits");
+  if (!tbody) return;
+
+  try {
+    const rep  = await fetch("/admin/api/produits");
+    const data = await rep.json();
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;padding:24px;color:var(--brun-clair)">
+        Aucun article dans le catalogue. <button class="btn-primaire" onclick="ouvrirModalProduit()">+ Ajouter le premier</button>
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(p => {
+      // Indicateur stock couleur
+      const indic = p.stock_indicateur || "vert";
+      const stockLabel = {
+        vert   : `<span class="badge-statut s-ok">${p.stock} en stock</span>`,
+        orange : `<span class="badge-statut s-warn">${p.stock} — Stock bas</span>`,
+        rouge  : `<span class="badge-statut s-err">${p.stock} — Critique !</span>`,
+        rupture: `<span class="badge-statut s-err">Rupture</span>`,
+      }[indic] || `<span>${p.stock}</span>`;
+
+      const prixAff = p.prix_promo
+        ? `<span style="font-weight:700;color:var(--rouge)">${formaterPrix(p.prix_promo)}</span>
+           <br><small style="text-decoration:line-through;color:var(--brun-clair)">${formaterPrix(p.prix)}</small>`
+        : `<span style="font-weight:700;color:var(--or-sombre)">${formaterPrix(p.prix)}</span>`;
+
+      return `
+        <tr>
+          <td>
+            <div class="prod-mini-photo">
+              ${p.photo
+                ? `<img src="/static/images/produits/${p.photo}" alt="${p.nom}">`
+                : `<span style="font-size:22px">${iconeCategorie(p.categorie)}</span>`}
+            </div>
+          </td>
+          <td style="font-size:10px;font-family:monospace;color:var(--brun-clair)">${p.reference || "—"}</td>
+          <td>
+            <div style="font-weight:700;font-size:12px">${p.nom}</div>
+            <div style="font-size:10px;color:var(--brun-clair)">${(p.description || "").slice(0, 40)}…</div>
+          </td>
+          <td>${iconeCategorie(p.categorie)} ${p.categorie}</td>
+          <td>${{ femme: "🫧 Femme", homme: "🪸 Homme", mixte: "✨ Mixte" }[p.genre] || p.genre}</td>
+          <td>${prixAff}</td>
+          <td>${p.prix_promo ? `<span style="color:var(--rouge);font-size:10px">✔ Promo</span>` : "—"}</td>
+          <td>${stockLabel}</td>
+          <td>${p.badge ? `<span class="badge-or">${p.badge}</span>` : "—"}</td>
+          <td><span class="badge-statut ${p.actif ? "s-ok" : "s-info"}">${p.actif ? "Actif" : "Inactif"}</span></td>
+          <td>
+            <div style="display:flex;gap:6px">
+              <button class="btn-mini" onclick="editerProduit(${p.id})" title="Modifier">✏️</button>
+              ${p.actif
+                ? `<button class="btn-mini btn-danger" onclick="supprimerProduit(${p.id},'${p.nom.replace(/'/g,"\\'")}')">🗑️</button>`
+                : `<button class="btn-mini btn-success" onclick="reactiverProduit(${p.id},'${p.nom.replace(/'/g,"\\'")}')">♻️</button>`}
+            </div>
+          </td>
+        </tr>`;
+    }).join("");
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="11" style="text-align:center;color:var(--rouge);padding:24px">
+      ❌ Erreur de chargement : ${e.message}
+    </td></tr>`;
+    console.error("chargerTableProduits:", e);
+  }
+}
+
+/** Désactive (soft delete) un produit. */
+async function supprimerProduit(id, nom) {
+  if (!confirm(`Retirer "${nom}" du catalogue ?\n\nIl restera en base pour les commandes existantes.`)) return;
+  try {
+    const rep  = await fetch(`/admin/api/produit/supprimer/${id}`, { method: "DELETE" });
+    const data = await rep.json();
+    afficherToast(data.message || `"${nom}" retiré`);
+    chargerTableProduits();
+  } catch (e) {
+    afficherToast("❌ Erreur lors de la suppression", "❌");
+  }
+}
+
+/** Réactive un produit précédemment désactivé. */
+async function reactiverProduit(id, nom) {
+  try {
+    const rep  = await fetch(`/admin/api/produit/reactiver/${id}`, { method: "POST" });
+    const data = await rep.json();
+    afficherToast(`♻️ "${nom}" remis en ligne`);
+    chargerTableProduits();
+  } catch (e) {
+    afficherToast("❌ Erreur lors de la réactivation", "❌");
+  }
+}
+
+/**
+ * Pré-remplit le modal avec les données d'un produit existant.
+ * @param {number} id - ID du produit à éditer
+ */
 async function editerProduit(id) {
   try {
-    const rep = await fetch(`/api/produit/${id}`);
+    // Utiliser la route admin qui expose les vraies données de stock
+    const rep = await fetch(`/api/produits/${id}`);
     const p   = await rep.json();
 
     ADMIN.editId   = id;
-    ADMIN.couleurs = p.couleurs || [];
-    ADMIN.pointures = p.tailles || [];
-    ADMIN.tailles   = p.tailles || [];
+    ADMIN.couleurs = Array.isArray(p.couleurs) ? p.couleurs : [];
+    ADMIN.tailles  = Array.isArray(p.tailles)  ? p.tailles  : [];
+    ADMIN.pointures = ADMIN.tailles; // chaussures utilisent le même champ
 
     document.getElementById("modal-titre").textContent = `✏️ Modifier "${p.nom}"`;
-    document.getElementById("f-nom").value       = p.nom || "";
-    document.getElementById("f-prix").value      = p.prix || "";
+    document.getElementById("f-id").value         = id;
+    document.getElementById("f-nom").value        = p.nom || "";
+    document.getElementById("f-prix").value       = p.prix || "";
     document.getElementById("f-prix-promo").value = p.prix_promo || "";
-    document.getElementById("f-stock").value     = p.stock || "";
-    document.getElementById("f-desc").value      = p.description || "";
-    document.getElementById("f-genre").value     = p.genre || "femme";
-    document.getElementById("f-badge").value     = p.badge || "";
+    document.getElementById("f-stock").value      = p.stock != null ? p.stock : "";
+    document.getElementById("f-desc").value       = p.description || "";
+    document.getElementById("f-genre").value      = p.genre || "mixte";
+    document.getElementById("f-badge").value      = p.badge || "";
 
-    choisirType(p.categorie, document.querySelector(`.type-btn:nth-child(${["parfum","sac","chaussure","vetement"].indexOf(p.categorie)+1})`));
+    const vedette = document.getElementById("f-vedette");
+    if (vedette) vedette.checked = p.en_vedette || false;
+
+    // Sélectionner le type d'article
+    const typeIndex = ["parfum", "sac", "chaussure", "vetement", "accessoire"].indexOf(p.categorie);
+    const typeBtn   = document.querySelectorAll(".type-btn")[typeIndex];
+    choisirType(p.categorie, typeBtn || null);
+
+    // Photo existante
+    if (p.photo) {
+      const preview = document.getElementById("photo-preview");
+      preview.src   = `/static/images/produits/${p.photo}`;
+      preview.style.display = "block";
+      document.getElementById("upload-zone").classList.add("has-img");
+    }
+
     rendreCouleurTags();
     rendreTailleTags();
     rendrePointureTags();
 
     document.getElementById("modal-bg").classList.add("show");
-  } catch(e) { afficherToast("❌ Erreur chargement produit", "❌"); }
+
+  } catch (e) {
+    afficherToast("❌ Impossible de charger le produit", "❌");
+    console.error("editerProduit:", e);
+  }
 }
 
-// ── Table commandes ────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// TABLE COMMANDES
+// ══════════════════════════════════════════════════════════════
+
+/** Charge et affiche toutes les commandes dans le tableau. */
 async function chargerTableCommandes() {
+  const tbody = document.getElementById("tbody-commandes");
+  if (!tbody) return;
+
   try {
-    const rep   = await fetch("/admin/api/commandes");
-    const data  = await rep.json();
-    const tbody = document.getElementById("tbody-commandes");
-    if(!tbody) return;
-    const labelStatut = { en_attente:"⏳ En attente", confirmee:"✅ Confirmée", en_preparation:"📦 Préparation", livree:"🚚 Livrée", annulee:"❌ Annulée" };
-    const classeStatut = { en_attente:"s-warn", confirmee:"s-ok", en_preparation:"s-info", livree:"s-ok", annulee:"s-info" };
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td style="font-weight:700;color:var(--or-sombre)">${c.numero}</td>
-        <td>${c.client_nom}</td>
-        <td>${c.client_telephone}</td>
-        <td style="font-weight:700">${formaterPrix(c.total)}</td>
-        <td>${{orange:"🟠 Orange",momo:"🟡 MoMo",wave:"🔵 Wave",whatsapp:"💬 WhatsApp"}[c.paiement]||c.paiement||"—"}</td>
-        <td><span class="badge-statut ${classeStatut[c.statut]||"s-info"}">${labelStatut[c.statut]||c.statut}</span></td>
-        <td>${c.cree_le}</td>
-        <td>
-          <select onchange="changerStatutCommande(${c.id}, this.value)" style="padding:5px 8px;border:1px solid var(--border);border-radius:8px;font-size:11px">
-            ${["en_attente","confirmee","en_preparation","livree","annulee"].map(s =>
-              `<option value="${s}" ${c.statut===s?"selected":""}>${labelStatut[s]}</option>`
-            ).join("")}
-          </select>
-        </td>
-      </tr>`
-    ).join("") || `<tr><td colspan="8" style="text-align:center;padding:24px">Aucune commande</td></tr>`;
-  } catch(e) { console.error("Erreur commandes:", e); }
+    const rep  = await fetch("/admin/api/commandes");
+    const data = await rep.json();
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--brun-clair)">
+        Aucune commande enregistrée pour le moment.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => {
+      const s = STATUTS_COMMANDE[c.statut] || { label: c.statut, classe: "s-info" };
+
+      // Résumé des articles (ex: "Parfum Oud x2, Sac Python x1")
+      let resumeArt = "—";
+      try {
+        const arts = typeof c.articles === "string" ? JSON.parse(c.articles) : (c.articles || []);
+        if (arts.length) {
+          resumeArt = arts.slice(0, 2).map(a => `${a.nom} ×${a.quantite}`).join(", ");
+          if (arts.length > 2) resumeArt += ` + ${arts.length - 2} autre(s)`;
+        }
+      } catch (_) {}
+
+      return `
+        <tr data-statut="${c.statut}" data-id="${c.id}">
+          <td style="font-weight:700;color:var(--or-sombre);font-family:monospace">${c.numero}</td>
+          <td style="font-size:11px">${formaterDate(c.cree_le)}</td>
+          <td style="font-weight:600">${c.client_prenom ? c.client_prenom + " " : ""}${c.client_nom || "—"}</td>
+          <td>
+            <a href="https://wa.me/${(c.client_telephone||"").replace(/[^0-9]/g,"")}"
+               target="_blank" class="lien-tel" title="Contacter sur WhatsApp">
+              ${c.client_telephone || "—"}
+            </a>
+          </td>
+          <td style="font-size:11px;color:var(--brun-clair)">${resumeArt}</td>
+          <td style="font-weight:700">${formaterPrix(c.total)}</td>
+          <td style="font-size:11px">${c.canal || "site"}</td>
+          <td><span class="badge-statut ${s.classe}">${s.label}</span></td>
+          <td>
+            <button class="btn-mini" onclick="ouvrirModalCommande(${c.id})">Voir →</button>
+          </td>
+        </tr>`;
+    }).join("");
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--rouge);padding:24px">
+      ❌ Erreur de chargement : ${e.message}
+    </td></tr>`;
+    console.error("chargerTableCommandes:", e);
+  }
 }
 
-async function changerStatutCommande(id, statut) {
+/**
+ * Ouvre le modal de détail d'une commande.
+ * Charge l'historique des statuts + prépare la zone WhatsApp.
+ */
+async function ouvrirModalCommande(id) {
+  ADMIN.commandeId = id;
+  const corps = document.getElementById("modal-commande-corps");
+  corps.innerHTML = `<div style="text-align:center;padding:40px">Chargement...</div>`;
+  document.getElementById("modal-commande-bg").classList.add("show");
+  document.getElementById("wa-notif-zone").style.display = "none";
+
   try {
-    await fetch(`/admin/api/commande/statut/${id}`, {
-      method:"POST",
-      headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({statut})
+    const rep  = await fetch(`/admin/api/commande/${id}`);
+    const data = await rep.json();
+    const c    = data.commande;
+
+    // Pré-sélectionner le statut actuel dans le select
+    const sel = document.getElementById("nouveau-statut");
+    if (sel) sel.value = c.statut;
+
+    // ── Articles commandés ────────────────────────────────
+    let articlesHtml = "";
+    try {
+      const arts = typeof c.articles === "string" ? JSON.parse(c.articles) : (c.articles || []);
+      articlesHtml = arts.map(a => `
+        <div class="cmd-article-ligne">
+          ${a.photo
+            ? `<img src="/static/images/produits/${a.photo}" class="cmd-art-img">`
+            : `<span style="font-size:24px">${iconeCategorie(a.categorie)}</span>`}
+          <div style="flex:1">
+            <div style="font-weight:700">${a.nom}</div>
+            ${a.coloris ? `<small>Coloris : ${a.coloris}</small>` : ""}
+            ${a.taille  ? `<small> · Taille : ${a.taille}</small>`  : ""}
+          </div>
+          <div style="text-align:right">
+            <div style="font-weight:700">×${a.quantite}</div>
+            <div style="font-size:11px;color:var(--brun-clair)">${formaterPrix(a.prix_unitaire * a.quantite)}</div>
+          </div>
+        </div>`).join("") || "<p>Aucun article</p>";
+    } catch (_) {
+      articlesHtml = `<p style="color:var(--brun-clair)">${c.articles || "—"}</p>`;
+    }
+
+    // ── Historique des statuts ────────────────────────────
+    const histHtml = (c.historique || []).length
+      ? c.historique.map(h => `
+        <div class="hist-ligne">
+          <span class="hist-date">${formaterDate(h.change_le)}</span>
+          <span class="hist-qui">${h.modifie_par}</span>
+          <span>${h.statut_avant} → <strong>${h.statut_apres}</strong></span>
+          ${h.note ? `<span class="hist-note">${h.note}</span>` : ""}
+        </div>`).join("")
+      : `<p style="color:var(--brun-clair);font-size:12px">Aucun historique — premier statut.</p>`;
+
+    // ── Corps du modal ────────────────────────────────────
+    document.getElementById("modal-commande-titre").textContent =
+      `📦 Commande ${c.numero}`;
+
+    corps.innerHTML = `
+      <!-- Infos client -->
+      <div class="cmd-info-grille">
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Client</div>
+          <div>${c.client_prenom ? c.client_prenom + " " : ""}${c.client_nom}</div>
+        </div>
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Téléphone</div>
+          <div>
+            <a href="https://wa.me/${(c.client_telephone||"").replace(/[^0-9]/g,"")}"
+               target="_blank" class="lien-wa">${c.client_telephone || "—"}</a>
+          </div>
+        </div>
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Adresse</div>
+          <div>${c.client_adresse || "—"}</div>
+        </div>
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Canal</div>
+          <div>${c.canal || "site web"}</div>
+        </div>
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Date</div>
+          <div>${formaterDate(c.cree_le)}</div>
+        </div>
+        <div class="cmd-info-item">
+          <div class="cmd-info-lbl">Paiement</div>
+          <div>${c.paiement || "—"}</div>
+        </div>
+      </div>
+
+      <!-- Articles -->
+      <div style="margin:16px 0">
+        <h4 style="margin:0 0 10px;font-size:13px">🛍️ Articles commandés</h4>
+        <div class="cmd-articles-liste">${articlesHtml}</div>
+      </div>
+
+      <!-- Totaux -->
+      <div class="cmd-totaux">
+        <div class="cmd-total-ligne">
+          <span>Sous-total</span>
+          <span>${formaterPrix(c.sous_total || c.total)}</span>
+        </div>
+        ${c.remise_montant > 0 ? `
+        <div class="cmd-total-ligne" style="color:var(--vert)">
+          <span>Réduction${c.code_promo_utilise ? " ("+c.code_promo_utilise+")" : ""}</span>
+          <span>-${formaterPrix(c.remise_montant)}</span>
+        </div>` : ""}
+        <div class="cmd-total-ligne cmd-total-grand">
+          <span>TOTAL</span>
+          <span>${formaterPrix(c.total)}</span>
+        </div>
+      </div>
+
+      <!-- Notes admin -->
+      ${c.notes_admin ? `
+      <div style="margin:16px 0;padding:12px;background:var(--ivoire);border-radius:8px">
+        <strong style="font-size:12px">📝 Notes internes :</strong>
+        <p style="margin:6px 0 0;font-size:12px">${c.notes_admin}</p>
+      </div>` : ""}
+
+      <!-- Historique statuts -->
+      <div style="margin:16px 0">
+        <h4 style="margin:0 0 10px;font-size:13px">📋 Historique des statuts</h4>
+        <div class="historique-liste">${histHtml}</div>
+      </div>`;
+
+  } catch (e) {
+    corps.innerHTML = `<div style="color:var(--rouge);padding:20px">❌ Erreur : ${e.message}</div>`;
+    console.error("ouvrirModalCommande:", e);
+  }
+}
+
+function fermerModalCommande() {
+  document.getElementById("modal-commande-bg").classList.remove("show");
+  document.getElementById("wa-notif-zone").style.display = "none";
+  ADMIN.commandeId = null;
+}
+
+/**
+ * Envoie le changement de statut d'une commande au serveur.
+ * Affiche ensuite le lien WhatsApp de notification client.
+ */
+async function changerStatutCommande() {
+  if (!ADMIN.commandeId) return;
+
+  const statut = document.getElementById("nouveau-statut")?.value;
+  const note   = document.getElementById("note-statut")?.value.trim();
+
+  if (!statut) { afficherToast("⚠️ Sélectionnez un statut", "⚠️"); return; }
+
+  try {
+    const rep  = await fetch(`/admin/api/commande/statut/${ADMIN.commandeId}`, {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({ statut, note })
     });
-    afficherToast(`✅ Statut mis à jour`);
-  } catch(e) { afficherToast("❌ Erreur", "❌"); }
+    const data = await rep.json();
+
+    if (data.succes) {
+      const libelle = STATUTS_COMMANDE[statut]?.label || statut;
+      afficherToast(`✅ Statut → ${libelle}`);
+
+      // Rafraîchir le tableau des commandes en arrière-plan
+      chargerTableCommandes();
+
+      // Afficher la zone de notification WhatsApp si disponible
+      const notif = data.notification_wa;
+      if (notif && notif.url) {
+        const zone    = document.getElementById("wa-notif-zone");
+        const lien    = document.getElementById("wa-notif-lien");
+        const preview = document.getElementById("wa-notif-preview");
+        lien.href       = notif.url;
+        preview.textContent = notif.message ? `"${notif.message.slice(0, 100)}…"` : "";
+        zone.style.display  = "block";
+      }
+
+      // Effacer la note
+      const noteEl = document.getElementById("note-statut");
+      if (noteEl) noteEl.value = "";
+
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+    console.error("changerStatutCommande:", e);
+  }
 }
 
-// ── Table clients ─────────────────────────────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// TABLE CLIENTS
+// ══════════════════════════════════════════════════════════════
+
+/** Charge et affiche le registre clients. */
 async function chargerTableClients() {
-  try {
-    const rep   = await fetch("/admin/api/clients");
-    const data  = await rep.json();
-    const tbody = document.getElementById("tbody-clients");
-    if(!tbody) return;
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td style="font-weight:700">${c.prenom}</td>
-        <td>${c.nom||"—"}</td>
-        <td style="color:var(--or-sombre);font-size:11px">${c.email.includes("sans-email")?"—":c.email}</td>
-        <td>${c.telephone||"—"}</td>
-        <td>${c.date_naissance ? "🎂 "+c.date_naissance : "—"}</td>
-        <td>${c.adresse||"—"}</td>
-        <td>${c.interet||"—"}</td>
-        <td><span class="badge-statut s-info">${c.source||"popup"}</span></td>
-        <td style="text-align:center">${c.nb_commandes}</td>
-        <td style="font-size:11px">${c.cree_le}</td>
-      </tr>`
-    ).join("") || `<tr><td colspan="8" style="text-align:center;padding:24px">Aucun client enregistré</td></tr>`;
-  } catch(e) { console.error("Erreur clients:", e); }
-}
+  const tbody = document.getElementById("tbody-clients");
+  if (!tbody) return;
 
-// ── Stats marketing ───────────────────────────────────────────
-async function chargerStatsClients() {
   try {
     const rep  = await fetch("/admin/api/clients");
     const data = await rep.json();
-    const el   = document.getElementById("stats-clients");
-    if(!el) return;
-    const total   = data.length;
-    const popup   = data.filter(c => c.source === "popup").length;
-    const commande = data.filter(c => c.source === "commande").length;
-    el.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:10px">
-        <div style="background:var(--ivoire);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--or)">${total}</div>
-          <div style="font-size:10px;color:var(--brun-clair);text-transform:uppercase;letter-spacing:1px">Total</div>
-        </div>
-        <div style="background:var(--ivoire);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--rose-sombre)">${popup}</div>
-          <div style="font-size:10px;color:var(--brun-clair);text-transform:uppercase;letter-spacing:1px">Pop-up</div>
-        </div>
-        <div style="background:var(--ivoire);border-radius:8px;padding:12px;text-align:center">
-          <div style="font-size:22px;font-weight:700;color:var(--vert)">${commande}</div>
-          <div style="font-size:10px;color:var(--brun-clair);text-transform:uppercase;letter-spacing:1px">Commandes</div>
-        </div>
-      </div>`;
-  } catch(e) {}
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--brun-clair)">
+        Aucun client enregistré.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => {
+      // Masquer les emails fictifs (clients sans email)
+      const emailAff = (!c.email || c.email.includes("sans-email")) ? "—" : c.email;
+
+      return `
+        <tr>
+          <td style="font-weight:700">${c.prenom || "—"}</td>
+          <td>${c.nom || "—"}</td>
+          <td>
+            ${c.telephone
+              ? `<a href="https://wa.me/${c.telephone.replace(/[^0-9]/g,"")}"
+                    target="_blank" class="lien-tel">${c.telephone}</a>`
+              : "—"}
+          </td>
+          <td style="font-size:11px;color:var(--brun-clair)">${emailAff}</td>
+          <td>${c.interet || "—"}</td>
+          <td><span class="badge-statut s-info">${c.source || "popup"}</span></td>
+          <td style="text-align:center;font-weight:700">${c.nb_commandes || 0}</td>
+          <td>${c.consentement ? "✅" : "❌"}</td>
+          <td style="font-size:11px;color:var(--brun-clair)">${formaterDate(c.cree_le)}</td>
+        </tr>`;
+    }).join("");
+
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--rouge);padding:24px">
+      ❌ Erreur de chargement
+    </td></tr>`;
+    console.error("chargerTableClients:", e);
+  }
 }
 
-// ── Modal ajout / modification produit ───────────────────────
+
+// ══════════════════════════════════════════════════════════════
+// BANNIÈRES — Carrousel d'accueil
+// ══════════════════════════════════════════════════════════════
+
+/** Charge et affiche la liste des bannières. */
+async function chargerBannieres() {
+  const conteneur = document.getElementById("bannieres-liste");
+  if (!conteneur) return;
+
+  try {
+    const rep  = await fetch("/admin/api/bannieres");
+    const data = await rep.json();
+
+    if (!data.length) {
+      conteneur.innerHTML = `
+        <div style="text-align:center;padding:60px;color:var(--brun-clair)">
+          <div style="font-size:48px;margin-bottom:12px">🖼️</div>
+          <p>Aucune bannière créée.</p>
+          <button class="btn-primaire" onclick="ouvrirModalBanniere()">+ Créer la première bannière</button>
+        </div>`;
+      return;
+    }
+
+    conteneur.innerHTML = data.map(b => `
+      <div class="banniere-card ${b.actif ? "" : "banniere-inactive"}" data-id="${b.id}">
+        <div class="banniere-card-header">
+          <span style="font-size:28px">${b.deco_emoji || "✨"}</span>
+          <div style="flex:1">
+            <div style="font-weight:700">${b.titre}</div>
+            ${b.sous_titre ? `<div style="font-size:11px;color:var(--brun-clair)">${b.sous_titre}</div>` : ""}
+          </div>
+          <div class="banniere-ordre">Ordre ${b.ordre}</div>
+        </div>
+        <div class="banniere-card-meta">
+          <span class="badge-statut ${b.actif ? "s-ok" : "s-info"}">${b.actif ? "Active" : "Inactive"}</span>
+          <span class="badge-or">${b.collection || "les-deux"}</span>
+          <span style="font-size:11px;color:var(--brun-clair)">${b.style || "clair"}</span>
+          ${b.date_debut || b.date_fin
+            ? `<span style="font-size:11px;color:var(--brun-clair)">
+                📅 ${b.date_debut ? b.date_debut.slice(0,10) : "—"} → ${b.date_fin ? b.date_fin.slice(0,10) : "∞"}
+               </span>`
+            : `<span style="font-size:11px;color:var(--brun-clair)">📅 Permanente</span>`}
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px">
+          <span style="font-size:11px;flex:1">→ ${b.lien_bouton || "/"}</span>
+          <button class="btn-mini" onclick="editerBanniere(${b.id})">✏️ Modifier</button>
+          ${b.actif
+            ? `<button class="btn-mini btn-danger" onclick="desactiverBanniere(${b.id},'${b.titre.replace(/'/g,"\\'")}')">🚫 Désactiver</button>`
+            : `<button class="btn-mini" onclick="activerBanniere(${b.id},'${b.titre.replace(/'/g,"\\'")}')">▶️ Activer</button>`}
+        </div>
+      </div>`
+    ).join("");
+
+  } catch (e) {
+    conteneur.innerHTML = `<div style="color:var(--rouge);padding:20px">❌ Erreur de chargement</div>`;
+    console.error("chargerBannieres:", e);
+  }
+}
+
+function ouvrirModalBanniere() {
+  // Réinitialiser le formulaire
+  ["b-titre","b-sous-titre","b-btn-texte","b-btn-lien","b-emoji","b-debut","b-fin"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = id === "b-btn-texte" ? "Découvrir" : id === "b-btn-lien" ? "/" : "";
+  });
+  document.getElementById("b-ordre").value = "99";
+  document.getElementById("b-id").value    = "";
+  document.getElementById("modal-banniere-titre").textContent = "Nouvelle bannière";
+  document.getElementById("modal-banniere-bg").classList.add("show");
+}
+
+function fermerModalBanniere() {
+  document.getElementById("modal-banniere-bg").classList.remove("show");
+}
+
+/** Pré-remplit le modal bannière pour modification. */
+async function editerBanniere(id) {
+  try {
+    const rep  = await fetch("/admin/api/bannieres");
+    const data = await rep.json();
+    const b    = data.find(x => x.id === id);
+    if (!b) { afficherToast("Bannière introuvable", "❌"); return; }
+
+    document.getElementById("b-id").value         = b.id;
+    document.getElementById("b-titre").value      = b.titre || "";
+    document.getElementById("b-sous-titre").value = b.sous_titre || "";
+    document.getElementById("b-btn-texte").value  = b.texte_bouton || "Découvrir";
+    document.getElementById("b-btn-lien").value   = b.lien_bouton || "/";
+    document.getElementById("b-collection").value = b.collection || "les-deux";
+    document.getElementById("b-style").value      = b.style || "clair";
+    document.getElementById("b-emoji").value      = b.deco_emoji || "✨";
+    document.getElementById("b-ordre").value      = b.ordre || 99;
+    document.getElementById("b-debut").value      = b.date_debut ? b.date_debut.slice(0,10) : "";
+    document.getElementById("b-fin").value        = b.date_fin   ? b.date_fin.slice(0,10)   : "";
+    document.getElementById("modal-banniere-titre").textContent = `✏️ Modifier "${b.titre}"`;
+    document.getElementById("modal-banniere-bg").classList.add("show");
+  } catch (e) {
+    afficherToast("❌ Erreur", "❌");
+  }
+}
+
+/** Sauvegarde une bannière (création ou modification). */
+async function sauvegarderBanniere() {
+  const titre = document.getElementById("b-titre")?.value.trim();
+  if (!titre) { afficherToast("⚠️ Le titre est obligatoire", "⚠️"); return; }
+
+  const bid = document.getElementById("b-id")?.value;
+  const url = bid
+    ? `/admin/api/banniere/modifier/${bid}`
+    : "/admin/api/banniere/creer";
+
+  const payload = {
+    titre        : titre,
+    sous_titre   : document.getElementById("b-sous-titre")?.value.trim() || "",
+    texte_bouton : document.getElementById("b-btn-texte")?.value.trim() || "Découvrir",
+    lien_bouton  : document.getElementById("b-btn-lien")?.value.trim() || "/",
+    collection   : document.getElementById("b-collection")?.value || "les-deux",
+    style        : document.getElementById("b-style")?.value || "clair",
+    deco_emoji   : document.getElementById("b-emoji")?.value || "✨",
+    ordre        : parseInt(document.getElementById("b-ordre")?.value || "99"),
+    date_debut   : document.getElementById("b-debut")?.value || null,
+    date_fin     : document.getElementById("b-fin")?.value || null,
+    actif        : true,
+  };
+
+  try {
+    const rep  = await fetch(url, {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify(payload)
+    });
+    const data = await rep.json();
+    if (data.succes) {
+      afficherToast(bid ? "✅ Bannière modifiée" : "✅ Bannière créée");
+      fermerModalBanniere();
+      chargerBannieres();
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+    console.error("sauvegarderBanniere:", e);
+  }
+}
+
+/** Désactive une bannière. */
+async function desactiverBanniere(id, titre) {
+  if (!confirm(`Désactiver la bannière "${titre}" ?`)) return;
+  await fetch(`/admin/api/banniere/supprimer/${id}`, { method: "DELETE" });
+  afficherToast(`Bannière "${titre}" désactivée`);
+  chargerBannieres();
+}
+
+/** Réactive une bannière (passe actif=true). */
+async function activerBanniere(id, titre) {
+  await fetch(`/admin/api/banniere/modifier/${id}`, {
+    method  : "POST",
+    headers : { "Content-Type": "application/json" },
+    body    : JSON.stringify({ actif: true })
+  });
+  afficherToast(`▶️ Bannière "${titre}" réactivée`);
+  chargerBannieres();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// CODES PROMO
+// ══════════════════════════════════════════════════════════════
+
+/** Charge et affiche la liste des codes promo. */
+async function chargerCodesPromo() {
+  const tbody = document.getElementById("tbody-promos");
+  if (!tbody) return;
+
+  try {
+    const rep  = await fetch("/admin/api/codes-promo");
+    const data = await rep.json();
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:24px;color:var(--brun-clair)">
+        Aucun code promo — créez-en un ci-dessus.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td style="font-weight:800;color:var(--or-sombre);font-size:14px;font-family:monospace">${c.code}</td>
+        <td style="font-size:11px">${c.type_reduction === "montant_fixe" ? "FCFA fixe" : "Pourcentage"}</td>
+        <td style="font-weight:700;color:var(--vert)">-${c.reduction_pct}%</td>
+        <td style="font-size:11px">${c.montant_min ? formaterPrix(c.montant_min) : "Aucun"}</td>
+        <td>${c.nb_utilisations}${c.max_utilisations ? " / " + c.max_utilisations : " / ∞"}</td>
+        <td style="font-size:11px">${c.expire_le ? c.expire_le.slice(0,10) : "—"}</td>
+        <td style="font-size:11px;color:var(--brun-clair)">${c.description || "—"}</td>
+        <td><span class="badge-statut ${c.actif ? "s-ok" : "s-warn"}">${c.actif ? "✅ Actif" : "⛔ Expiré"}</span></td>
+        <td>
+          ${c.actif
+            ? `<button class="btn-mini btn-danger" onclick="desactiverCode(${c.id})">Désactiver</button>`
+            : "—"}
+        </td>
+      </tr>`
+    ).join("");
+
+  } catch (e) {
+    console.error("chargerCodesPromo:", e);
+  }
+}
+
+/** Crée un nouveau code promo via le formulaire. */
+async function creerCodePromo() {
+  const code = document.getElementById("np-code")?.value.trim().toUpperCase();
+  const pct  = document.getElementById("np-pct")?.value;
+  const type = document.getElementById("np-type")?.value || "pourcentage";
+  const min  = document.getElementById("np-min")?.value  || "";
+  const max  = document.getElementById("np-max")?.value  || "";
+  const cond = document.getElementById("np-conditions")?.value || "tous";
+  const deb  = document.getElementById("np-debut")?.value || "";
+  const exp  = document.getElementById("np-expire")?.value || "";
+  const desc = document.getElementById("np-desc")?.value.trim() || "";
+
+  if (!code || !pct) {
+    afficherToast("⚠️ Code et pourcentage de réduction obligatoires", "⚠️");
+    return;
+  }
+
+  try {
+    const rep  = await fetch("/admin/api/code-promo/creer", {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({
+        code,
+        type_reduction   : type,
+        reduction_pct    : parseInt(pct),
+        montant_min      : min ? parseInt(min) : null,
+        max_utilisations : max ? parseInt(max) : null,
+        conditions       : cond,
+        date_debut       : deb || null,
+        expire_le        : exp || null,
+        description      : desc,
+      })
+    });
+    const data = await rep.json();
+
+    if (data.succes) {
+      afficherToast(`✅ Code "${code}" créé (-${pct}%)`);
+      ["np-code","np-pct","np-min","np-max","np-debut","np-expire","np-desc"].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = "";
+      });
+      chargerCodesPromo();
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+  }
+}
+
+/** Désactive un code promo. */
+async function desactiverCode(id) {
+  if (!confirm("Désactiver ce code promo ?")) return;
+  await fetch(`/admin/api/code-promo/desactiver/${id}`, { method: "POST" });
+  afficherToast("Code désactivé");
+  chargerCodesPromo();
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// MODAL PRODUIT — Création et modification
+// ══════════════════════════════════════════════════════════════
+
+/** Ouvre le modal produit en mode création. */
 function ouvrirModalProduit() {
   ADMIN.editId    = null;
   ADMIN.couleurs  = [];
   ADMIN.pointures = [];
   ADMIN.tailles   = [];
+
   document.getElementById("modal-titre").textContent = "Nouvel article";
-  document.getElementById("modal-bg").classList.add("show");
-  // Remettre les champs à zéro
-  ["f-nom","f-prix","f-prix-promo","f-stock","f-desc"].forEach(id => {
-    const el = document.getElementById(id);
-    if(el) el.value = "";
-  });
-  document.getElementById("photo-preview").style.display = "none";
-  document.getElementById("upload-zone").classList.remove("has-img");
+  document.getElementById("f-id").value = "";
+
+  // Vider tous les champs
+  ["f-nom","f-prix","f-prix-promo","f-stock","f-desc","f-ml","f-dims","f-talon","f-seuil-bas","f-seuil-haut"]
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ""; });
+
+  const vedette = document.getElementById("f-vedette");
+  if (vedette) vedette.checked = false;
+
+  // Réinitialiser photo
+  const preview = document.getElementById("photo-preview");
+  if (preview) { preview.style.display = "none"; preview.src = ""; }
+  document.getElementById("upload-zone")?.classList.remove("has-img");
+  const input = document.getElementById("photo-input");
+  if (input) input.value = "";
+
+  // Désélectionner le type
   document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
   document.querySelectorAll(".champs-type").forEach(el => el.style.display = "none");
   ADMIN.typeProduit = null;
-  rendreCouleurTags(); rendreTailleTags(); rendrePointureTags();
+
+  rendreCouleurTags();
+  rendreTailleTags();
+  rendrePointureTags();
+
+  document.getElementById("modal-bg").classList.add("show");
 }
 
 function fermerModalProduit() {
   document.getElementById("modal-bg").classList.remove("show");
 }
 
+/** Sélectionne un type d'article et affiche les champs spécifiques. */
 function choisirType(type, btn) {
   ADMIN.typeProduit = type;
   document.querySelectorAll(".type-btn").forEach(b => b.classList.remove("active"));
-  if(btn) btn.classList.add("active");
+  if (btn) btn.classList.add("active");
   document.querySelectorAll(".champs-type").forEach(el => el.style.display = "none");
   const cible = document.getElementById("champs-" + type);
-  if(cible) cible.style.display = "block";
+  if (cible) cible.style.display = "block";
 }
 
+/** Affiche un aperçu de l'image sélectionnée. */
 function previewPhoto(input) {
-  const file = input.files[0]; if(!file) return;
+  const file = input.files[0];
+  if (!file) return;
   const reader = new FileReader();
   reader.onload = e => {
     const img = document.getElementById("photo-preview");
     img.src = e.target.result;
     img.style.display = "block";
-    document.getElementById("upload-zone").classList.add("has-img");
+    document.getElementById("upload-zone")?.classList.add("has-img");
   };
   reader.readAsDataURL(file);
 }
 
-// Gestion des tags couleurs
+/** Gestion du drag & drop de photo. */
+function dropPhoto(event) {
+  event.preventDefault();
+  const file = event.dataTransfer.files[0];
+  if (!file || !file.type.startsWith("image/")) {
+    afficherToast("⚠️ Fichier image requis", "⚠️");
+    return;
+  }
+  const input = document.getElementById("photo-input");
+  const dt    = new DataTransfer();
+  dt.items.add(file);
+  input.files = dt.files;
+  previewPhoto(input);
+}
+
+// ── Gestion des tags couleurs ──────────────────────────────────
+
+/** Correspondance noms de couleur → code hexadécimal. */
+const MAP_COULEURS = {
+  noir:"#1a1a1a", blanc:"#ffffff", or:"#C9922A", rouge:"#E8341C",
+  bleu:"#1E3A5F", vert:"#2ECC71", caramel:"#D2691E", bordeaux:"#8B0000",
+  rose:"#F2AEBB", gris:"#808080", marine:"#1E3A5F", violet:"#9B59B6",
+  beige:"#F5DEB3", marron:"#8B4513",
+};
+
 function ajouterCouleurTag(e) {
-  if(e.key !== "Enter" && e.key !== ",") return;
+  if (e.key !== "Enter" && e.key !== ",") return;
   e.preventDefault();
   const val = document.getElementById("input-couleur").value.trim();
-  if(!val) return;
-  const mapCouleurs = {
-    noir:"#1a1a1a",blanc:"#ffffff",or:"#C9922A",rouge:"#E8341C",
-    bleu:"#1E3A5F",vert:"#1E8A3C",caramel:"#D2691E",bordeaux:"#8B0000",
-    rose:"#F2AEBB",gris:"#808080",marine:"#1E3A5F"
-  };
-  const hex = mapCouleurs[val.toLowerCase()] || "#C9922A";
+  if (!val) return;
+  const hex = MAP_COULEURS[val.toLowerCase()] || "#C9922A";
   ajouterCouleurVite(hex, val);
   document.getElementById("input-couleur").value = "";
 }
+
 function ajouterCouleurVite(hex, nom) {
-  if(ADMIN.couleurs.find(c => c.hex === hex)) return;
+  if (ADMIN.couleurs.find(c => c.hex === hex)) return;
   ADMIN.couleurs.push({ hex, nom });
   rendreCouleurTags();
 }
+
 function retirerCouleur(i) { ADMIN.couleurs.splice(i, 1); rendreCouleurTags(); }
+
 function rendreCouleurTags() {
-  const wrap = document.getElementById("tags-couleurs");
+  const wrap  = document.getElementById("tags-couleurs");
   const input = document.getElementById("input-couleur");
-  if(!wrap || !input) return;
+  if (!wrap || !input) return;
   wrap.innerHTML = "";
-  ADMIN.couleurs.forEach((c,i) => {
+  ADMIN.couleurs.forEach((c, i) => {
     const tag = document.createElement("span");
     tag.className = "tag-item tag-couleur";
-    tag.style.background = c.hex;
-    tag.style.color = c.hex === "#ffffff" || c.hex === "#FBF3E8" ? "#333" : "white";
-    tag.innerHTML = `${c.nom}<button onclick="retirerCouleur(${i})">✕</button>`;
+    tag.style.background   = c.hex;
+    tag.style.color        = ["#ffffff","#FBF3E8","#F5DEB3","#beige"].includes(c.hex) ? "#333" : "white";
+    tag.innerHTML = `${c.nom}<button type="button" onclick="retirerCouleur(${i})">✕</button>`;
     wrap.appendChild(tag);
   });
   wrap.appendChild(input);
 }
 
-// Gestion des tags pointures
+// ── Gestion des tags pointures ─────────────────────────────────
+
 function ajouterPointureTag(e) {
-  if(e.key !== "Enter") return; e.preventDefault();
+  if (e.key !== "Enter") return;
+  e.preventDefault();
   const val = document.getElementById("input-pointure").value.trim();
-  if(!val || ADMIN.pointures.includes(val)) return;
+  if (!val || ADMIN.pointures.includes(val)) return;
   ADMIN.pointures.push(val);
   document.getElementById("input-pointure").value = "";
   rendrePointureTags();
 }
+
 function ajouterPointureVite(t) {
-  if(!ADMIN.pointures.includes(t)) { ADMIN.pointures.push(t); rendrePointureTags(); }
+  if (!ADMIN.pointures.includes(t)) { ADMIN.pointures.push(t); rendrePointureTags(); }
 }
-function retirerPointure(i) { ADMIN.pointures.splice(i,1); rendrePointureTags(); }
+
+function retirerPointure(i) { ADMIN.pointures.splice(i, 1); rendrePointureTags(); }
+
 function rendrePointureTags() {
   const wrap  = document.getElementById("tags-pointures");
   const input = document.getElementById("input-pointure");
-  if(!wrap || !input) return;
+  if (!wrap || !input) return;
   wrap.innerHTML = "";
-  ADMIN.pointures.forEach((t,i) => {
+  ADMIN.pointures.forEach((t, i) => {
     const tag = document.createElement("span");
     tag.className = "tag-item tag-taille";
-    tag.innerHTML = `${t}<button onclick="retirerPointure(${i})">✕</button>`;
+    tag.innerHTML = `${t}<button type="button" onclick="retirerPointure(${i})">✕</button>`;
     wrap.appendChild(tag);
   });
   wrap.appendChild(input);
 }
 
-// Gestion des tags tailles vêtements
+// ── Gestion des tags tailles (vêtements) ──────────────────────
+
 function ajouterTailleTag(e) {
-  if(e.key !== "Enter") return; e.preventDefault();
+  if (e.key !== "Enter") return;
+  e.preventDefault();
   const val = document.getElementById("input-taille").value.trim();
-  if(!val || ADMIN.tailles.includes(val)) return;
+  if (!val || ADMIN.tailles.includes(val)) return;
   ADMIN.tailles.push(val);
   document.getElementById("input-taille").value = "";
   rendreTailleTags();
 }
+
 function ajouterTailleVite(t) {
-  if(!ADMIN.tailles.includes(t)) { ADMIN.tailles.push(t); rendreTailleTags(); }
+  if (!ADMIN.tailles.includes(t)) { ADMIN.tailles.push(t); rendreTailleTags(); }
 }
-function retirerTaille(i) { ADMIN.tailles.splice(i,1); rendreTailleTags(); }
+
+function retirerTaille(i) { ADMIN.tailles.splice(i, 1); rendreTailleTags(); }
+
 function rendreTailleTags() {
   const wrap  = document.getElementById("tags-tailles");
   const input = document.getElementById("input-taille");
-  if(!wrap || !input) return;
+  if (!wrap || !input) return;
   wrap.innerHTML = "";
-  ADMIN.tailles.forEach((t,i) => {
+  ADMIN.tailles.forEach((t, i) => {
     const tag = document.createElement("span");
     tag.className = "tag-item tag-taille";
-    tag.innerHTML = `${t}<button onclick="retirerTaille(${i})">✕</button>`;
+    tag.innerHTML = `${t}<button type="button" onclick="retirerTaille(${i})">✕</button>`;
     wrap.appendChild(tag);
   });
   wrap.appendChild(input);
 }
 
-// ── Sauvegarder un produit ────────────────────────────────────
+// ── Sauvegarder un produit (création ou modification) ─────────
+
+/** Collecte les données du modal et envoie en POST avec FormData. */
 async function sauvegarderProduit() {
-  const nom      = document.getElementById("f-nom")?.value.trim();
-  const prix     = document.getElementById("f-prix")?.value;
-  const stock    = document.getElementById("f-stock")?.value;
+  const nom   = document.getElementById("f-nom")?.value.trim();
+  const prix  = document.getElementById("f-prix")?.value;
+  const stock = document.getElementById("f-stock")?.value;
 
-  if(!nom || !prix) { afficherToast("⚠️ Nom et prix obligatoires", "⚠️"); return; }
-  if(!ADMIN.typeProduit) { afficherToast("⚠️ Choisissez un type d'article", "⚠️"); return; }
+  if (!nom || !prix) {
+    afficherToast("⚠️ Nom et prix sont obligatoires", "⚠️");
+    return;
+  }
+  if (!ADMIN.typeProduit) {
+    afficherToast("⚠️ Choisissez un type d'article", "⚠️");
+    return;
+  }
 
-  // Construire les attributs selon le type
+  // Construire les attributs spécifiques selon le type
   let attributs = {};
-  if(ADMIN.typeProduit === "parfum") {
+  if (ADMIN.typeProduit === "parfum") {
     attributs = {
       ml      : document.getElementById("f-ml")?.value || "",
       olfactif: document.getElementById("f-olfactif")?.value || "",
       tenue   : document.getElementById("f-tenue")?.value || "",
     };
-  } else if(ADMIN.typeProduit === "sac") {
+  } else if (ADMIN.typeProduit === "sac") {
     attributs = {
-      matiere   : document.getElementById("f-matiere-sac")?.value || "",
-      dimensions: document.getElementById("f-dims")?.value || "",
+      matiere    : document.getElementById("f-matiere-sac")?.value || "",
+      dimensions : document.getElementById("f-dims")?.value || "",
     };
-  } else if(ADMIN.typeProduit === "chaussure") {
+  } else if (ADMIN.typeProduit === "chaussure") {
     attributs = {
-      matiere: document.getElementById("f-matiere-chaussure")?.value || "",
-      talon  : document.getElementById("f-talon")?.value || "0",
+      matiere : document.getElementById("f-matiere-chaussure")?.value || "",
+      talon   : document.getElementById("f-talon")?.value || "0",
     };
-  } else if(ADMIN.typeProduit === "vetement") {
+  } else if (ADMIN.typeProduit === "vetement") {
     attributs = {
-      tissu      : document.getElementById("f-tissu")?.value || "",
-      type_vetement: document.getElementById("f-type-vet")?.value || "",
+      tissu         : document.getElementById("f-tissu")?.value || "",
+      type_vetement : document.getElementById("f-type-vet")?.value || "",
     };
   }
 
-  const tailles = ADMIN.typeProduit === "chaussure" ? ADMIN.pointures : ADMIN.tailles;
+  // Tailles = pointures pour chaussures, tailles pour vêtements
+  const taillesFinal = ADMIN.typeProduit === "chaussure" ? ADMIN.pointures : ADMIN.tailles;
 
-  // Construire le FormData (pour envoyer la photo + les champs)
+  // Construction du FormData (supporte l'envoi de fichier)
   const fd = new FormData();
   fd.append("nom",        nom);
   fd.append("categorie",  ADMIN.typeProduit);
@@ -403,167 +1103,159 @@ async function sauvegarderProduit() {
   fd.append("stock",      stock || "0");
   fd.append("description",document.getElementById("f-desc")?.value || "");
   fd.append("badge",      document.getElementById("f-badge")?.value || "");
+  fd.append("en_vedette", document.getElementById("f-vedette")?.checked ? "true" : "false");
   fd.append("couleurs",   JSON.stringify(ADMIN.couleurs));
-  fd.append("tailles",    JSON.stringify(tailles));
+  fd.append("tailles",    JSON.stringify(taillesFinal));
   fd.append("attributs",  JSON.stringify(attributs));
+  fd.append("seuil_bas",  document.getElementById("f-seuil-bas")?.value  || "3");
+  fd.append("seuil_haut", document.getElementById("f-seuil-haut")?.value || "10");
 
+  // Ajouter la photo si sélectionnée
   const photoInput = document.getElementById("photo-input");
-  if(photoInput?.files[0]) fd.append("photo", photoInput.files[0]);
+  if (photoInput?.files[0]) fd.append("photo", photoInput.files[0]);
 
   const url = ADMIN.editId
     ? `/admin/api/produit/modifier/${ADMIN.editId}`
-    : `/admin/api/produit/ajouter`;
+    : "/admin/api/produit/ajouter";
+
+  // Désactiver le bouton pendant l'envoi
+  const btn = document.getElementById("btn-sauvegarder-produit");
+  if (btn) { btn.disabled = true; btn.textContent = "Enregistrement..."; }
 
   try {
-    const rep  = await fetch(url, { method:"POST", body:fd });
+    const rep  = await fetch(url, { method: "POST", body: fd });
     const data = await rep.json();
-    if(data.succes) {
+
+    if (data.succes) {
       fermerModalProduit();
       chargerTableProduits();
       afficherToast(`✅ "${nom}" enregistré avec succès !`);
     } else {
-      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+      afficherToast("❌ " + (data.erreur || "Erreur serveur"), "❌");
     }
-  } catch(e) { afficherToast("❌ Erreur réseau", "❌"); }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+    console.error("sauvegarderProduit:", e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "✅ Enregistrer l'article"; }
+  }
 }
 
-// ── Ticker admin ──────────────────────────────────────────────
-function ajouterTicker() {
-  const texte = document.getElementById("new-ticker")?.value.trim();
-  if(!texte) return;
-  afficherToast("📢 Message ajouté au bandeau");
-  document.getElementById("new-ticker").value = "";
-}
 
-// ── Initialisation ────────────────────────────────────────────
-document.addEventListener("DOMContentLoaded", () => {
-  chargerTableProduits();  // charger le tableau produits dès l'ouverture
-  document.getElementById("modal-bg")?.addEventListener("click", function(e) {
-    if(e.target === this) fermerModalProduit();
-  });
-});
+// ══════════════════════════════════════════════════════════════
+// MODAL CLIENT — Ajout manuel
+// ══════════════════════════════════════════════════════════════
 
-
-// ── Codes Promo ──────────────────────────────────────────────
-async function chargerCodesPromo() {
-  try {
-    const rep   = await fetch("/admin/api/codes-promo");
-    const data  = await rep.json();
-    const tbody = document.getElementById("tbody-promos");
-    if(!tbody) return;
-    tbody.innerHTML = data.map(c => `
-      <tr>
-        <td style="font-weight:800;color:var(--or-sombre);font-size:15px">${c.code}</td>
-        <td style="font-weight:700;color:var(--vert)">-${c.reduction_pct}%</td>
-        <td>${c.nb_utilisations}${c.max_utilisations ? " / "+c.max_utilisations : " / ∞"}</td>
-        <td>${c.expire_le}</td>
-        <td style="font-size:11px;color:var(--brun-clair)">${c.description}</td>
-        <td><span class="badge-statut ${c.valide?"s-ok":"s-warn"}">${c.valide?"✅ Actif":"⛔ Inactif"}</span></td>
-        <td>
-          ${c.actif ? `<button style="background:rgba(232,52,28,0.1);color:var(--rouge);border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:800;cursor:pointer" onclick="desactiverCode(${c.id})">Désactiver</button>` : "—"}
-        </td>
-      </tr>`
-    ).join("") || `<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--brun-clair)">Aucun code promo — créez-en un ci-dessus</td></tr>`;
-  } catch(e) { console.error("Erreur codes promo:", e); }
-}
-
-async function creerCodePromo() {
-  const code = document.getElementById("np-code")?.value.trim().toUpperCase();
-  const pct  = document.getElementById("np-pct")?.value;
-  const max  = document.getElementById("np-max")?.value;
-  const exp  = document.getElementById("np-expire")?.value;
-  const desc = document.getElementById("np-desc")?.value.trim();
-
-  if(!code || !pct) { afficherToast("⚠️ Code et réduction obligatoires", "⚠️"); return; }
-
-  try {
-    const rep  = await fetch("/admin/api/code-promo/creer", {
-      method : "POST",
-      headers: {"Content-Type":"application/json"},
-      body   : JSON.stringify({
-        code, reduction_pct: pct,
-        max_utilisations: max || null,
-        expire_le: exp || null,
-        description: desc
-      })
-    });
-    const data = await rep.json();
-    if(data.succes) {
-      afficherToast(`✅ Code "${code}" créé (-${pct}%)`);
-      // Vider le formulaire
-      ["np-code","np-pct","np-max","np-expire","np-desc"].forEach(id => {
-        const el = document.getElementById(id);
-        if(el) el.value = "";
-      });
-      chargerCodesPromo();
-    } else {
-      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
-    }
-  } catch(e) { afficherToast("❌ Erreur réseau", "❌"); }
-}
-
-async function desactiverCode(id) {
-  if(!confirm("Désactiver ce code promo ?")) return;
-  await fetch(`/admin/api/code-promo/desactiver/${id}`, {method:"POST"});
-  afficherToast("Code désactivé");
-  chargerCodesPromo();
-}
-
-// ── Client manuel ─────────────────────────────────────────────
 function ouvrirModalClient() {
-  document.getElementById("modal-client-bg").classList.add("show");
-  ["mc-prenom","mc-nom","mc-tel","mc-email","mc-adresse","mc-naissance"].forEach(id => {
-    const el = document.getElementById(id); if(el) el.value = "";
+  ["mc-prenom","mc-nom","mc-tel","mc-email","mc-adresse"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
   });
-  const cmds = document.getElementById("mc-cmds");
-  if(cmds) cmds.value = "0";
+  document.getElementById("modal-client-bg").classList.add("show");
 }
 
 function fermerModalClient() {
   document.getElementById("modal-client-bg").classList.remove("show");
 }
 
+/** Enregistre un client ajouté manuellement depuis l'admin. */
 async function sauvegarderClientManuel() {
   const prenom = document.getElementById("mc-prenom")?.value.trim();
   const tel    = document.getElementById("mc-tel")?.value.trim();
 
-  if(!prenom || !tel) {
+  if (!prenom || !tel) {
     afficherToast("⚠️ Prénom et téléphone obligatoires", "⚠️");
     return;
   }
 
   try {
     const rep  = await fetch("/admin/api/client/ajouter", {
-      method : "POST",
-      headers: {"Content-Type":"application/json"},
-      body   : JSON.stringify({
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({
         prenom,
-        nom            : document.getElementById("mc-nom")?.value.trim() || "",
-        telephone      : tel,
-        email          : document.getElementById("mc-email")?.value.trim() || "",
-        interet        : document.getElementById("mc-interet")?.value || "tout",
-        adresse        : document.getElementById("mc-adresse")?.value.trim() || "",
-        date_naissance : document.getElementById("mc-naissance")?.value || "",
-        nb_commandes   : parseInt(document.getElementById("mc-cmds")?.value || "0")
+        nom       : document.getElementById("mc-nom")?.value.trim() || "",
+        telephone : tel,
+        email     : document.getElementById("mc-email")?.value.trim() || "",
+        interet   : document.getElementById("mc-interet")?.value || "tout",
+        adresse   : document.getElementById("mc-adresse")?.value.trim() || "",
       })
     });
     const data = await rep.json();
-    if(data.succes) {
+
+    if (data.succes) {
       fermerModalClient();
       chargerTableClients();
       afficherToast(`✅ ${prenom} ajouté au registre clients`);
     } else {
       afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
     }
-  } catch(e) { afficherToast("❌ Erreur réseau", "❌"); }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+  }
 }
 
-// Mettre à jour adminSection pour charger les codes promo
-const _adminSectionOriginal = adminSection;
-// Étendre adminSection pour les nouvelles sections
-const adminSectionOriginal = adminSection;
-adminSection = function(section, btn) {
-  adminSectionOriginal(section, btn);
-  if(section === "promos")  chargerCodesPromo();
-  if(section === "clients") chargerTableClients();
-};
+
+// ══════════════════════════════════════════════════════════════
+// EXPORT — Graphique ventes par année (section Stats)
+// ══════════════════════════════════════════════════════════════
+
+let _anneeGraph = new Date().getFullYear();
+
+/**
+ * Navigue entre les années pour le graphique ventes (section Stats).
+ * @param {HTMLElement} btn - Bouton cliqué (non utilisé mais reçu)
+ * @param {number} delta    - +1 (suivant) ou -1 (précédent)
+ */
+async function chargerGraphiqueAnnee(btn, delta) {
+  _anneeGraph += delta;
+  document.getElementById("annee-graph-label").textContent = _anneeGraph;
+
+  try {
+    // On recharge le graphique depuis le serveur
+    const rep  = await fetch(`/admin/api/stats/ventes?annee=${_anneeGraph}`);
+    const data = await rep.json();
+    // Le graphique matplotlib est rendu côté serveur au chargement initial.
+    // Pour le rechargement dynamique, on affiche un message simple.
+    const img = document.getElementById("img-graph-ventes");
+    if (img) img.style.opacity = "0.5";
+    afficherToast(`📊 Statistiques ${_anneeGraph} demandées. Actualisez la page pour voir le graphique.`);
+  } catch (e) {
+    console.error("chargerGraphiqueAnnee:", e);
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// INITIALISATION
+// ══════════════════════════════════════════════════════════════
+
+document.addEventListener("DOMContentLoaded", () => {
+  // Charger le tableau produits au démarrage (section visible par défaut)
+  chargerTableProduits();
+
+  // Fermer les modals en cliquant sur le fond sombre
+  ["modal-bg", "modal-commande-bg", "modal-banniere-bg", "modal-client-bg"].forEach(id => {
+    const modal = document.getElementById(id);
+    if (modal) {
+      modal.addEventListener("click", function(e) {
+        if (e.target === this) {
+          this.classList.remove("show");
+          if (id === "modal-commande-bg") {
+            document.getElementById("wa-notif-zone").style.display = "none";
+            ADMIN.commandeId = null;
+          }
+        }
+      });
+    }
+  });
+
+  // Raccourci Échap pour fermer les modals
+  document.addEventListener("keydown", e => {
+    if (e.key === "Escape") {
+      fermerModalProduit();
+      fermerModalCommande();
+      fermerModalBanniere();
+      fermerModalClient();
+    }
+  });
+});
