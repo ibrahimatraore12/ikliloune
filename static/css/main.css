@@ -296,16 +296,17 @@ img { max-width:100%; display:block; }
 .checkout-label { font-size:9px; font-weight:800; color:rgba(255,255,255,0.4); letter-spacing:1.5px; text-transform:uppercase; margin:14px 0 8px; }
 .paiement-options { display:flex; flex-direction:column; gap:6px; margin-bottom:12px; }
 .pay-opt {
-  display:flex; align-items:center; gap:10px; padding:9px 12px;
+  display:flex; align-items:center; gap:10px; padding:10px 12px;
   background:rgba(255,255,255,0.04); border:1.5px solid transparent;
   border-radius:var(--radius-sm); cursor:pointer; font-size:12px;
   color:white; font-weight:600; transition:var(--transition);
-  flex-direction:column; align-items:flex-start;
+  flex-wrap:wrap;
 }
 .pay-opt:has(input:checked), .pay-opt.selected {
-  border-color:var(--or); background:rgba(201,146,42,0.08);
+  border-color:var(--or); background:rgba(201,146,42,0.10);
+  box-shadow:0 0 0 3px rgba(201,146,42,0.12);
 }
-.pay-opt small { color:rgba(255,255,255,0.4); font-size:10px; font-weight:400; }
+.pay-opt small { color:rgba(255,255,255,0.4); font-size:10px; font-weight:400; width:100%; margin-top:2px; padding-left:2px; }
 .pay-opt input[type=radio] { display:none; }
 .checkout-input {
   width:100%; padding:10px 12px; margin-bottom:8px;
@@ -483,10 +484,33 @@ img { max-width:100%; display:block; }
 .paiement-card:hover { border-color:rgba(242,174,187,0.25); transform:translateX(3px); }
 .paiement-card small { font-size:10px; color:rgba(255,255,255,0.38); display:block; }
 .paiement-card span { font-size:20px; flex-shrink:0; }
-.paiement-card.orange { border-left:3px solid #FF6600; }
-.paiement-card.momo   { border-left:3px solid #FFCB05; }
-.paiement-card.wave   { border-left:3px solid #0066CC; }
+.paiement-card.orange { border-left:3px solid #FF7900; }
+.paiement-card.momo   { border-left:3px solid #FFCB00; }
+.paiement-card.wave   { border-left:3px solid #1B74E4; }
 .paiement-card.wa     { border-left:3px solid #25D366; }
+
+/* Logos opérateurs mobile money */
+.logo-operateur {
+  width: 100px; height: 36px;
+  object-fit: contain; flex-shrink:0;
+  border-radius:4px;
+  background:white; padding:2px 4px;
+}
+
+/* Logo dans les options de paiement (panier) */
+.pay-logo {
+  width: 88px; height: 30px;
+  object-fit: contain; flex-shrink:0;
+  background: white; border-radius:6px;
+  padding: 2px 4px;
+}
+
+/* Logo dans le ticker défilant */
+.ticker-logos { display:inline-flex; align-items:center; gap:6px; vertical-align:middle; }
+.ticker-logo  { width:56px; height:22px; object-fit:contain; border-radius:4px; background:white; padding:2px 3px; vertical-align:middle; }
+
+/* Icône WhatsApp footer */
+.wa-icone { font-size:20px; flex-shrink:0; }
 .footer-secure { display:flex; align-items:center; gap:8px; padding:9px 13px; background:rgba(242,174,187,0.05); border:1px solid rgba(242,174,187,0.15); border-radius:8px; font-size:11px; color:rgba(255,255,255,0.4); }
 .contact-liste { display:flex; flex-direction:column; gap:12px; }
 .contact-item { display:flex; align-items:flex-start; gap:10px; }

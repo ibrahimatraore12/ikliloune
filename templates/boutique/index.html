@@ -10,7 +10,12 @@
     <span class="ticker-item flash">✨ -5% sur votre 1ère commande — Inscrivez-vous !</span>
     <span class="ticker-item">🚚 Livraison GRATUITE à Abidjan</span>
     <span class="ticker-item highlight">🔥 Nouvelles collections Perles &amp; Corail 2025</span>
-    <span class="ticker-item">🟠 Orange Money · 🟡 MTN MoMo · 🔵 Wave acceptés</span>
+    <span class="ticker-item ticker-logos">
+      <img src="{{ url_for('static', filename='images/logos/orange-money.svg') }}" alt="Orange Money" class="ticker-logo">
+      <img src="{{ url_for('static', filename='images/logos/mtn-momo.svg') }}" alt="MTN MoMo" class="ticker-logo">
+      <img src="{{ url_for('static', filename='images/logos/wave.svg') }}" alt="Wave" class="ticker-logo">
+      acceptés
+    </span>
     <span class="ticker-item">📲 Commandez aussi par WhatsApp : +225 01 04 14 41 41</span>
     <span class="ticker-item flash">🪸 Boubou Brodé Or — Stock limité !</span>
     <!-- Répétition pour boucle infinie -->
@@ -191,9 +196,24 @@
     <!-- Mode de paiement -->
     <div class="checkout-label">Mode de paiement</div>
     <div class="paiement-options">
-      <label class="pay-opt selected"><input type="radio" name="pay" value="orange" checked>🟠 Orange Money<small>+225 01 04 14 41 41</small></label>
-      <label class="pay-opt"><input type="radio" name="pay" value="momo">🟡 MTN MoMo<small>+225 05 85 82 68 88</small></label>
-      <label class="pay-opt"><input type="radio" name="pay" value="wave">🔵 Wave<small>Scan QR</small></label>
+      <label class="pay-opt selected">
+        <input type="radio" name="pay" value="orange" checked>
+        <img src="{{ url_for('static', filename='images/logos/orange-money.svg') }}"
+             alt="Orange Money" class="pay-logo">
+        <small>+225 01 04 14 41 41</small>
+      </label>
+      <label class="pay-opt">
+        <input type="radio" name="pay" value="momo">
+        <img src="{{ url_for('static', filename='images/logos/mtn-momo.svg') }}"
+             alt="MTN MoMo" class="pay-logo">
+        <small>+225 05 85 82 68 88</small>
+      </label>
+      <label class="pay-opt">
+        <input type="radio" name="pay" value="wave">
+        <img src="{{ url_for('static', filename='images/logos/wave.svg') }}"
+             alt="Wave" class="pay-logo">
+        <small>Scan QR</small>
+      </label>
     </div>
 
     <!-- Infos client -->

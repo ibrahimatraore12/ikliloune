@@ -118,20 +118,23 @@
         <p class="footer-col-intro">Réglez en toute sécurité avec votre mobile money</p>
         <div class="paiement-cards">
           <div class="paiement-card orange">
-            <span>🟠</span>
-            <div><div>Orange Money</div><small>+225 07 48 95 69 59</small></div>
+            <img src="{{ url_for('static', filename='images/logos/orange-money.svg') }}"
+                 alt="Orange Money" class="logo-operateur">
+            <small>+225 07 48 95 69 59</small>
           </div>
           <div class="paiement-card momo">
-            <span>🟡</span>
-            <div><div>MTN MoMo</div><small>+225 05 85 82 68 88</small></div>
+            <img src="{{ url_for('static', filename='images/logos/mtn-momo.svg') }}"
+                 alt="MTN MoMo" class="logo-operateur">
+            <small>+225 05 85 82 68 88</small>
           </div>
           <div class="paiement-card wave">
-            <span>🔵</span>
-            <div><div>Wave</div><small>Scan QR ou numéro Wave</small></div>
+            <img src="{{ url_for('static', filename='images/logos/wave.svg') }}"
+                 alt="Wave" class="logo-operateur">
+            <small>Scan QR ou numéro Wave</small>
           </div>
           <div class="paiement-card wa">
-            <span>💬</span>
-            <div><div>Commande WhatsApp</div><small>Envoyez votre liste, on gère !</small></div>
+            <span class="wa-icone">💬</span>
+            <div><div>WhatsApp</div><small>Envoyez votre liste, on gère !</small></div>
           </div>
         </div>
         <div class="footer-secure">🔒 Paiement après confirmation · Transactions sécurisées</div>

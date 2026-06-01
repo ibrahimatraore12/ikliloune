@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" role="img" aria-label="Orange Money">
+  <!-- Fond blanc arrondi -->
+  <rect width="120" height="48" rx="8" fill="#ffffff"/>
+
+  <!-- Carré orange Orange -->
+  <rect x="6" y="6" width="36" height="36" rx="6" fill="#FF7900"/>
+  <!-- Lettre O stylisée Orange -->
+  <text x="24" y="32" font-family="Arial Black, sans-serif" font-size="22" font-weight="900"
+        fill="#ffffff" text-anchor="middle">O</text>
+
+  <!-- Texte "Orange" -->
+  <text x="50" y="21" font-family="Arial, sans-serif" font-size="13" font-weight="700"
+        fill="#FF7900">Orange</text>
+  <!-- Texte "Money" -->
+  <text x="50" y="36" font-family="Arial, sans-serif" font-size="12" font-weight="400"
+        fill="#333333">Money</text>
+</svg>

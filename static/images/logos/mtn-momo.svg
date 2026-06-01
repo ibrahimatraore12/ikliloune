@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" role="img" aria-label="MTN MoMo">
+  <!-- Fond blanc arrondi -->
+  <rect width="120" height="48" rx="8" fill="#ffffff"/>
+
+  <!-- Badge MTN jaune -->
+  <rect x="6" y="6" width="36" height="36" rx="6" fill="#FFCB00"/>
+  <!-- Texte MTN en bleu foncé -->
+  <text x="24" y="29" font-family="Arial Black, sans-serif" font-size="11" font-weight="900"
+        fill="#002EA0" text-anchor="middle" letter-spacing="-0.5">MTN</text>
+
+  <!-- Texte "MTN" grand -->
+  <text x="50" y="21" font-family="Arial Black, sans-serif" font-size="13" font-weight="900"
+        fill="#FFCB00" letter-spacing="1">MTN</text>
+  <!-- Texte "MoMo" -->
+  <text x="50" y="36" font-family="Arial, sans-serif" font-size="12" font-weight="600"
+        fill="#002EA0">MoMo</text>
+</svg>

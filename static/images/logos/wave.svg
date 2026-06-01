@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 48" role="img" aria-label="Wave">
+  <!-- Fond blanc arrondi -->
+  <rect width="120" height="48" rx="8" fill="#ffffff"/>
+
+  <!-- Cercle Wave bleu -->
+  <circle cx="24" cy="24" r="18" fill="#1B74E4"/>
+  <!-- Vague stylisée (W) -->
+  <path d="M12 26 Q15 20 18 26 Q21 32 24 26 Q27 20 30 26 Q33 32 36 26"
+        stroke="#ffffff" stroke-width="2.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Texte "wave" minuscule bleu Wave -->
+  <text x="50" y="27" font-family="Arial, sans-serif" font-size="20" font-weight="700"
+        fill="#1B74E4" letter-spacing="-0.5">wave</text>
+</svg>
