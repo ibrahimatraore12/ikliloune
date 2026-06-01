@@ -1,23 +1,112 @@
 # =============================================================
-# render.yaml — Configuration déploiement automatique Render
+# render.yaml — Configuration déploiement automatique Render.com
+# IKLILOUNE — La Maison du Chic
+#
+# Déploiement :
+#   1. Connecter le repo GitHub à Render.com
+#   2. Créer une PostgreSQL Database dans Render (plan Free)
+#   3. Copier l'URL interne de la DB dans DATABASE_URL
+#   4. Remplir ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_URL_SECRET
+#   5. Pousser sur main → déploiement automatique
 # =============================================================
 
 services:
+
+  # ── Service Web (application Flask) ────────────────────────
   - type: web
-    name: ikliloune
+    name: ikliloune-app
     env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 "main:creer_app()"
+    region: frankfurt    # choisir la région la plus proche de la CI
+    plan: free           # starter gratuit (mettre "starter" en prod)
+
+    # Commandes de build et démarrage
+    buildCommand: |
+      pip install -r requirements.txt
+    startCommand: >
+      gunicorn
+      --bind 0.0.0.0:$PORT
+      --workers 2
+      --threads 2
+      --timeout 120
+      --worker-class sync
+      --access-logfile -
+      --error-logfile -
+      "main:creer_app()"
+
+    # Variables d'environnement
     envVars:
+      # ── Secrets générés automatiquement ────────────────────
       - key: SECRET_KEY
-        generateValue: true
+        generateValue: true   # généré par Render, jamais exposé
+
+      # ── Configuration application ───────────────────────────
       - key: FLASK_DEBUG
         value: "False"
+      - key: FLASK_ENV
+        value: "production"
+
+      # ── Base de données (PostgreSQL Render) ─────────────────
+      # Remplacer par l'URL interne de votre DB Render
+      - key: DATABASE_URL
+        fromDatabase:
+          name: ikliloune-db
+          property: connectionString
+
+      # ── Admin — À REMPLIR dans le dashboard Render ──────────
       - key: ADMIN_USERNAME
-        sync: false
+        sync: false   # saisir manuellement dans Render
+
       - key: ADMIN_PASSWORD
-        sync: false
+        sync: false   # mot de passe fort, min 12 caractères
+
+      - key: ADMIN_URL_SECRET
+        sync: false   # ex: ik-admin-2026-confidentiel
+
+      - key: ADMIN_URL_DASHBOARD
+        sync: false   # ex: ik-dashboard-prive-2026
+
+      - key: ADMIN_URL_LOGOUT
+        sync: false   # ex: ik-logout-prive
+
+      # ── Contact et réseaux ──────────────────────────────────
       - key: NUMERO_WHATSAPP
         value: "2250104144141"
+
+      - key: NUMERO_ORANGE_MONEY
+        value: "0748956959"
+
+      - key: NUMERO_MTN_MOMO
+        value: "0585826888"
+
       - key: EMAIL_MAGASIN
         value: "contact@ikliloune.com"
+
+      # ── Réseaux sociaux ─────────────────────────────────────
+      - key: INSTAGRAM_URL
+        value: "https://instagram.com/ikliloune"
+
+      - key: FACEBOOK_URL
+        value: "https://facebook.com/ikliloune"
+
+      - key: TIKTOK_URL
+        value: "https://tiktok.com/@ikliloune"
+
+      - key: SNAPCHAT_URL
+        value: "https://snapchat.com/add/ikliloune"
+
+      # ── Seuils de stock ─────────────────────────────────────
+      - key: SEUIL_STOCK_BAS
+        value: "3"
+
+      - key: SEUIL_STOCK_HAUT
+        value: "10"
+
+    # Check de santé — Render vérifie /health toutes les minutes
+    healthCheckPath: /health
+
+
+  # ── Base de données PostgreSQL ──────────────────────────────
+databases:
+  - name: ikliloune-db
+    plan: free          # PostgreSQL 256 Mo offert
+    region: frankfurt
