@@ -11,38 +11,57 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # --- Chemins ---------------------------------------------------
-# Dossier racine du projet (parent de backend/)
-DOSSIER_RACINE = os.path.abspath(
-    os.path.join(os.path.dirname(__file__), "..")
-)
-
-DOSSIER_IMAGES   = os.path.join(DOSSIER_RACINE, "static", "images", "produits")
-DOSSIER_TEMP     = os.path.join(DOSSIER_RACINE, "uploads_temp")
+DOSSIER_RACINE    = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+DOSSIER_IMAGES    = os.path.join(DOSSIER_RACINE, "static", "images", "produits")
+DOSSIER_TEMP      = os.path.join(DOSSIER_RACINE, "uploads_temp")
 DOSSIER_TEMPLATES = os.path.join(DOSSIER_RACINE, "templates")
-DOSSIER_STATIC   = os.path.join(DOSSIER_RACINE, "static")
+DOSSIER_STATIC    = os.path.join(DOSSIER_RACINE, "static")
 
 # --- Sécurité --------------------------------------------------
-# Lire depuis .env — jamais écrire les vrais secrets ici
-SECRET_KEY       = os.environ.get("SECRET_KEY", "dev-key-local")
-ADMIN_USERNAME   = os.environ.get("ADMIN_USERNAME", "admin")
-ADMIN_PASSWORD   = os.environ.get("ADMIN_PASSWORD", "admin")
+SECRET_KEY     = os.environ.get("SECRET_KEY", "dev-key-local-change-en-prod")
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "admin")
+
+# --- URL Admin secrète (jamais exposée sur le site) -----------
+ADMIN_URL_SECRET   = os.environ.get("ADMIN_URL_SECRET", "ik-gestion-2025-prive")
+ADMIN_URL_DASHBOARD = os.environ.get("ADMIN_URL_DASHBOARD", "ik-dashboard-prive")
+ADMIN_URL_LOGOUT    = os.environ.get("ADMIN_URL_LOGOUT", "ik-gestion-logout")
 
 # --- Base de données -------------------------------------------
-# SQLite = un fichier .db local, parfait pour démarrer
-CHEMIN_DB  = os.path.join(DOSSIER_RACINE, "ikliloune.db")
-URL_DB     = f"sqlite:///{CHEMIN_DB}"
+CHEMIN_DB = os.path.join(DOSSIER_RACINE, "ikliloune.db")
+URL_DB    = os.environ.get("DATABASE_URL", f"sqlite:///{CHEMIN_DB}")
+# Render.com retourne postgres:// → SQLAlchemy veut postgresql://
+if URL_DB.startswith("postgres://"):
+    URL_DB = URL_DB.replace("postgres://", "postgresql://", 1)
 
 # --- Images ----------------------------------------------------
-TAILLE_MAX_UPLOAD        = 10 * 1024 * 1024   # 10 Mo max
-FORMATS_ACCEPTES         = {"jpg", "jpeg", "png", "webp"}
-LARGEUR_MAX_IMAGE        = 800    # pixels
-HAUTEUR_MAX_IMAGE        = 800    # pixels
-QUALITE_WEBP             = 82     # 0-100 — bon équilibre qualité/poids
+TAILLE_MAX_UPLOAD  = 10 * 1024 * 1024   # 10 Mo max
+FORMATS_ACCEPTES   = {"jpg", "jpeg", "png", "webp", "gif"}
+LARGEUR_MAX_IMAGE  = 800
+HAUTEUR_MAX_IMAGE  = 800
+QUALITE_WEBP       = 82
 
-# --- Contact magasin -------------------------------------------
-NUMERO_WHATSAPP = os.environ.get("NUMERO_WHATSAPP", "2250104144141")
-EMAIL_MAGASIN   = os.environ.get("EMAIL_MAGASIN", "contact@ikliloune.com")
+# --- Stock — seuils pour indicateur couleur client ------------
+# Le client voit uniquement vert / orange / rouge (jamais le chiffre)
+SEUIL_STOCK_BAS  = int(os.environ.get("SEUIL_STOCK_BAS",  "3"))
+SEUIL_STOCK_HAUT = int(os.environ.get("SEUIL_STOCK_HAUT", "10"))
 
-# --- Serveur ---------------------------------------------------
+# --- Contact magasin ------------------------------------------
+NUMERO_WHATSAPP  = os.environ.get("NUMERO_WHATSAPP", "2250104144141")
+NUMERO_WHATSAPP2 = os.environ.get("NUMERO_WHATSAPP2", "2250585826888")
+EMAIL_MAGASIN    = os.environ.get("EMAIL_MAGASIN",    "contact@ikliloune.com")
+
+# --- Réseaux sociaux ------------------------------------------
+INSTAGRAM_URL = os.environ.get("INSTAGRAM_URL", "https://instagram.com/ikliloune")
+FACEBOOK_URL  = os.environ.get("FACEBOOK_URL",  "https://facebook.com/ikliloune")
+TIKTOK_URL    = os.environ.get("TIKTOK_URL",    "https://tiktok.com/@ikliloune")
+SNAPCHAT_URL  = os.environ.get("SNAPCHAT_URL",  "https://snapchat.com/add/ikliloune")
+
+# --- Paiement Mobile Money ------------------------------------
+ORANGE_MONEY_NUM = os.environ.get("ORANGE_MONEY_NUM", "+225 07 48 95 69 59")
+MTN_MOMO_NUM     = os.environ.get("MTN_MOMO_NUM",     "+225 05 85 82 68 88")
+WAVE_NUM         = os.environ.get("WAVE_NUM",          "")
+
+# --- Serveur --------------------------------------------------
 DEBUG = os.environ.get("FLASK_DEBUG", "True") == "True"
-PORT  = int(os.environ.get("PORT", 5000))
+PORT  = int(os.environ.get("PORT", 5001))   # 5001 — évite conflit VSCode

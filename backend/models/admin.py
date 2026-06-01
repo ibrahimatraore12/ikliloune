@@ -1,63 +1,55 @@
 # =============================================================
-# models/admin.py — Compte administrateur du site
-# Accès exclusif et privé au dashboard
+# models/admin.py — Compte administrateur / responsable vente
 # =============================================================
 
 from datetime import datetime
-from backend.database import db
 from flask_login import UserMixin
+from backend.database import db
 import bcrypt
 
 
-class Admin(db.Model, UserMixin):
-    """
-    Le responsable du site — seul utilisateur du dashboard admin.
-    UserMixin ajoute les méthodes requises par Flask-Login
-    (is_authenticated, is_active, get_id).
-    """
+class Admin(UserMixin, db.Model):
+    """Compte admin — accès au dashboard de gestion."""
 
     __tablename__ = "admins"
 
-    id              = db.Column(db.Integer, primary_key=True)
-    username        = db.Column(db.String(80), unique=True, nullable=False)
+    id                  = db.Column(db.Integer, primary_key=True)
+    username            = db.Column(db.String(80), unique=True, nullable=False)
+    email               = db.Column(db.String(120), unique=True, nullable=True)
+    password_hash       = db.Column(db.String(255), nullable=False)
 
-    # Mot de passe hashé avec bcrypt — jamais stocké en clair
-    password_hash   = db.Column(db.String(200), nullable=False)
+    # Anti brute-force
+    tentatives_echec    = db.Column(db.Integer, nullable=False, default=0)
+    bloque_jusqu        = db.Column(db.DateTime, nullable=True)
 
-    # Dernière connexion (pour le suivi de sécurité)
-    derniere_connexion = db.Column(db.DateTime, nullable=True)
-    cree_le            = db.Column(db.DateTime, default=datetime.utcnow)
+    derniere_connexion  = db.Column(db.DateTime, nullable=True)
+    actif               = db.Column(db.Boolean, nullable=False, default=True)
+    cree_le             = db.Column(db.DateTime, default=datetime.utcnow)
 
     def set_password(self, mot_de_passe):
         """
-        Hashe et stocke le mot de passe.
-        bcrypt ajoute automatiquement un sel aléatoire.
-
-        Exemple :
-            admin.set_password("MonMotDePasse2025!")
+        Hash le mot de passe avec bcrypt (coût 12) et le stocke.
+        Ne jamais stocker un mot de passe en clair.
         """
-        # encode() = convertir la chaîne en bytes (requis par bcrypt)
-        hash_bytes = bcrypt.hashpw(
+        self.password_hash = bcrypt.hashpw(
             mot_de_passe.encode("utf-8"),
-            bcrypt.gensalt()           # sel aléatoire unique
-        )
-        # decode() = reconvertir en chaîne pour stocker en base
-        self.password_hash = hash_bytes.decode("utf-8")
+            bcrypt.gensalt(rounds=12)
+        ).decode("utf-8")
 
     def verifier_password(self, mot_de_passe):
         """
-        Vérifie si le mot de passe saisi correspond au hash stocké.
+        Vérifie si le mot de passe fourni correspond au hash stocké.
 
-        Retourne True si correct, False sinon.
+        Retourne :
+            bool : True si correct, False sinon
         """
-        return bcrypt.checkpw(
-            mot_de_passe.encode("utf-8"),
-            self.password_hash.encode("utf-8")
-        )
-
-    def get_id(self):
-        """Requis par Flask-Login — retourne l'ID comme chaîne."""
-        return str(self.id)
+        try:
+            return bcrypt.checkpw(
+                mot_de_passe.encode("utf-8"),
+                self.password_hash.encode("utf-8")
+            )
+        except Exception:
+            return False
 
     def __repr__(self):
         return f"<Admin #{self.id} | {self.username}>"

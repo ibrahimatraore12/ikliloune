@@ -1,28 +1,59 @@
-# Environnement Python
-.python-version
-__pycache__/
-*.pyc
-*.pyo
+# =============================================================
+# .gitignore — Fichiers à ne JAMAIS commiter
+# =============================================================
+
+# Secrets
+.env
+*.env
 
 # Base de données locale
 *.db
+*.sqlite
 *.sqlite3
+instance/
 
-# Variables secrètes (mots de passe, clés API)
-.env
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
 
-# Images produits (trop lourdes pour Git)
+# Environnement virtuel
+.venv/
+venv/
+env/
+ikliloune-env/
+.pyenv/
+
+# Images produits (générées à l'upload — pas dans Git)
 static/images/produits/
 uploads_temp/
 
-# Système
+# Tests & coverage
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+logs/
+
+# OS
 .DS_Store
 Thumbs.db
-*.log
-.env
+desktop.ini
 
-# Docker
-*.tar
-
-# Production
-gunicorn.log
+# Render / Docker
+*.pid

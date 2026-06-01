@@ -1,6 +1,5 @@
 # =============================================================
 # models/code_promo.py — Codes promotionnels
-# Permet de créer des codes promo pour les campagnes marketing
 # =============================================================
 
 from datetime import datetime
@@ -13,56 +12,110 @@ class CodePromo(db.Model):
     __tablename__ = "codes_promo"
 
     id          = db.Column(db.Integer, primary_key=True)
-
-    # Le code que le client saisit (ex: "ETE25", "NOEL10")
     code        = db.Column(db.String(30), unique=True, nullable=False)
-
-    # Description interne (ex: "Campagne été 2025")
     description = db.Column(db.String(200), nullable=True)
 
-    # Réduction en pourcentage (ex: 10 = -10%)
-    reduction_pct = db.Column(db.Integer, nullable=False, default=5)
+    # Type : "pourcentage" | "montant_fixe"
+    type_reduction   = db.Column(db.String(20), nullable=False, default="pourcentage")
+    valeur           = db.Column(db.Integer,    nullable=False, default=5)
 
-    # Nombre maximum d'utilisations (None = illimité)
-    max_utilisations = db.Column(db.Integer, nullable=True)
+    # Conditions d'application
+    # "tous" | "nouveaux_clients" | "evenement"
+    conditions       = db.Column(db.String(30), nullable=False, default="tous")
 
-    # Nombre d'utilisations actuelles
+    # Montant minimum du panier pour que le code s'applique (0 = pas de minimum)
+    montant_min      = db.Column(db.Integer, nullable=False, default=0)
+
+    # Limites temporelles
+    date_debut       = db.Column(db.DateTime, nullable=True)
+    date_fin         = db.Column(db.DateTime, nullable=True)
+
+    # Limites d'usage
+    max_utilisations = db.Column(db.Integer, nullable=True)   # None = illimité
     nb_utilisations  = db.Column(db.Integer, nullable=False, default=0)
 
-    # Date d'expiration (None = pas d'expiration)
-    expire_le   = db.Column(db.DateTime, nullable=True)
+    # Soft delete
+    actif            = db.Column(db.Boolean, nullable=False, default=True)
+    cree_le          = db.Column(db.DateTime, default=datetime.utcnow)
 
-    # Actif ou non
-    actif       = db.Column(db.Boolean, nullable=False, default=True)
+    # Rétrocompatibilité (ancien champ)
+    reduction_pct    = db.Column(db.Integer, nullable=True)
+    expire_le        = db.Column(db.DateTime, nullable=True)
 
-    cree_le     = db.Column(db.DateTime, default=datetime.utcnow)
+    def calculer_remise(self, total_panier):
+        """
+        Calcule le montant de la remise en FCFA.
 
-    def est_valide(self):
+        Paramètre :
+            total_panier (int) : montant du panier en FCFA
+
+        Retourne :
+            int : montant de la réduction en FCFA
+        """
+        if self.type_reduction == "pourcentage":
+            pct = self.valeur or self.reduction_pct or 0
+            return int(total_panier * pct / 100)
+        elif self.type_reduction == "montant_fixe":
+            return min(self.valeur, total_panier)
+        return 0
+
+    def est_valide(self, total_panier=0, nb_commandes_client=0):
         """
         Vérifie si le code est utilisable.
-        Conditions : actif + pas expiré + pas épuisé
+
+        Paramètres :
+            total_panier        (int) : montant du panier en FCFA
+            nb_commandes_client (int) : nombre de commandes passées par ce client
+
+        Retourne :
+            tuple (bool, str) : (valide, message)
         """
         if not self.actif:
-            return False, "Code inactif"
+            return False, "Ce code promo est inactif"
 
-        if self.expire_le and datetime.utcnow() > self.expire_le:
-            return False, "Code expiré"
+        maintenant = datetime.utcnow()
 
+        # Vérifier date_fin (aussi expire_le pour rétrocompatibilité)
+        fin = self.date_fin or self.expire_le
+        if fin and maintenant > fin:
+            return False, "Ce code promo a expiré"
+
+        # Vérifier date de début
+        if self.date_debut and maintenant < self.date_debut:
+            return False, "Ce code promo n'est pas encore actif"
+
+        # Vérifier le nombre d'utilisations maximum
         if self.max_utilisations and self.nb_utilisations >= self.max_utilisations:
-            return False, "Code épuisé"
+            return False, "Ce code promo a atteint son nombre maximum d'utilisations"
 
-        return True, "Valide"
+        # Vérifier le montant minimum du panier
+        if self.montant_min and total_panier < self.montant_min:
+            return False, f"Panier minimum requis : {self.montant_min:,} FCFA".replace(",", " ")
+
+        # Vérifier conditions nouveaux clients
+        if self.conditions == "nouveaux_clients" and nb_commandes_client > 0:
+            return False, "Ce code est réservé aux nouveaux clients"
+
+        return True, "Code valide"
 
     def vers_dict(self):
+        """Convertit en dict pour l'API JSON."""
+        pct = self.valeur if self.type_reduction == "pourcentage" else (self.reduction_pct or 0)
         valide, msg = self.est_valide()
+        fin = self.date_fin or self.expire_le
         return {
             "id"              : self.id,
             "code"            : self.code,
             "description"     : self.description or "",
-            "reduction_pct"   : self.reduction_pct,
+            "type_reduction"  : self.type_reduction,
+            "valeur"          : self.valeur,
+            "reduction_pct"   : pct,
+            "conditions"      : self.conditions,
+            "montant_min"     : self.montant_min,
+            "date_debut"      : self.date_debut.strftime("%d/%m/%Y") if self.date_debut else "",
+            "date_fin"        : fin.strftime("%d/%m/%Y") if fin else "Illimité",
             "max_utilisations": self.max_utilisations,
             "nb_utilisations" : self.nb_utilisations,
-            "expire_le"       : self.expire_le.strftime("%d/%m/%Y") if self.expire_le else "Illimité",
             "actif"           : self.actif,
             "valide"          : valide,
             "message"         : msg,
@@ -70,4 +123,4 @@ class CodePromo(db.Model):
         }
 
     def __repr__(self):
-        return f"<CodePromo {self.code} | -{self.reduction_pct}%>"
+        return f"<CodePromo {self.code} | -{self.valeur}{'%' if self.type_reduction == 'pourcentage' else ' FCFA'}>"
