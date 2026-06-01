@@ -93,7 +93,7 @@ def _init_donnees_defaut(app):
         if not CodePromo.query.filter_by(code=code_str).first():
             db.session.add(CodePromo(
                 code=code_str, description=desc,
-                type_reduction="pourcentage", valeur=pct,
+                type_reduction="pourcentage", reduction_pct=pct,
                 conditions=cond, actif=True
             ))
             print(f"✅ Code promo créé : {code_str}")
