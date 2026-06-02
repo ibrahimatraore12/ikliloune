@@ -218,12 +218,32 @@
 
     <!-- Infos client -->
     <div class="checkout-label">Vos informations</div>
-    <input class="checkout-input" id="c-nom"      placeholder="Prénom et Nom *">
-    <input class="checkout-input" id="c-tel"      placeholder="Téléphone (+225...) *" type="tel">
-    <input class="checkout-input" id="c-email"    placeholder="Email (facultatif)" type="email">
-    <input class="checkout-input" id="c-adresse"  placeholder="Commune / Quartier Abidjan">
-    <input class="checkout-input" id="c-promo"    placeholder="Code promo (ex: IKLI5)"
-           oninput="appliquerPromo(this.value)">
+    <input class="checkout-input" id="c-nom"
+           placeholder="Prénom et Nom *"
+           autocomplete="name">
+
+    <!-- Téléphone avec drapeau CI + préfixe +225 pré-rempli -->
+    <div class="tel-wrap">
+      <span class="tel-prefix">🇨🇮 +225</span>
+      <input class="checkout-input tel-input" id="c-tel"
+             type="tel"
+             placeholder="07 00 00 00 00"
+             maxlength="14"
+             autocomplete="tel"
+             oninput="nettoyerTelephone(this)"
+             inputmode="numeric">
+    </div>
+
+    <input class="checkout-input" id="c-email"
+           placeholder="Email (facultatif)"
+           type="email" autocomplete="email">
+    <input class="checkout-input" id="c-adresse"
+           placeholder="Commune / Quartier · Ex : Cocody, Yopougon…"
+           autocomplete="street-address">
+    <input class="checkout-input" id="c-promo"
+           placeholder="Code promo (ex: IKLI5)"
+           oninput="appliquerPromo(this.value)"
+           style="text-transform:uppercase">
 
     <button class="btn-commander" onclick="validerCommande()">✅ Valider la commande</button>
     <button class="btn-whatsapp"  onclick="commanderWhatsApp()">💬 Commander par WhatsApp</button>
@@ -275,7 +295,13 @@
           <div class="popup-field"><span>��</span><input type="text"  id="p-nom"     placeholder="Nom *" required></div>
         </div>
         <div class="popup-field"><span>📧</span><input type="email" id="p-email"   placeholder="Votre e-mail *" required></div>
-        <div class="popup-field"><span>📲</span><input type="tel"   id="p-tel"     placeholder="Téléphone (+225...)"></div>
+        <div class="popup-field popup-tel-wrap">
+          <span>🇨🇮</span>
+          <span class="popup-prefix">+225</span>
+          <input type="tel" id="p-tel" placeholder="07 00 00 00 00"
+                 maxlength="10" inputmode="numeric"
+                 oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+        </div>
         <div class="popup-field">
           <span>🛍️</span>
           <select id="p-interet">

@@ -367,21 +367,114 @@ async function appliquerPromo(code) {
   }
 }
 
+// ── Numéro WhatsApp boutique ──────────────────────────────────
+const WA_BOUTIQUE = "2250748956959";
+
+// ── Nettoyage téléphone en temps réel ─────────────────────────
+function nettoyerTelephone(input) {
+  // Ne garder que les chiffres
+  let val = input.value.replace(/\D/g, "");
+  // Limiter à 10 chiffres (format ivoirien sans indicatif)
+  if(val.length > 10) val = val.slice(0, 10);
+  input.value = val;
+  // Feedback visuel : rouge si < 8 chiffres, vert si OK
+  const wrap = input.closest(".tel-wrap");
+  if(wrap) {
+    wrap.style.setProperty("--tel-color",
+      val.length === 10 ? "var(--or)" :
+      val.length >= 8   ? "rgba(255,200,0,0.5)" :
+      "rgba(255,100,100,0.5)"
+    );
+  }
+}
+
+// ── Construction du numéro complet avec préfixe +225 ──────────
+function construireTelephone() {
+  const input = document.getElementById("c-tel");
+  if(!input) return "";
+  const chiffres = input.value.replace(/\D/g, "");
+  if(!chiffres) return "";
+  // Si l'utilisateur a saisi 10 chiffres → +225 + 10 chiffres
+  // Si 8-9 chiffres → on laisse passer, le serveur valide
+  return "+225" + chiffres;
+}
+
+// ── Validation côté client avant envoi ────────────────────────
+function validerFormulaire() {
+  const nom      = document.getElementById("c-nom")?.value.trim()  || "";
+  const telRaw   = document.getElementById("c-tel")?.value.trim()  || "";
+
+  // Nom
+  if(nom.length < 2) {
+    afficherErreurChamp("c-nom", "Veuillez saisir votre prénom et nom.");
+    return false;
+  }
+  effacerErreurChamp("c-nom");
+
+  // Téléphone : 8 à 10 chiffres
+  const chiffres = telRaw.replace(/\D/g, "");
+  if(chiffres.length < 8) {
+    afficherErreurChamp("c-tel",
+      "Saisissez votre numéro ivoirien (ex : 07 00 00 00 00).");
+    return false;
+  }
+  effacerErreurChamp("c-tel");
+
+  return true;
+}
+
+function afficherErreurChamp(id, msg) {
+  const champ = document.getElementById(id);
+  if(!champ) return;
+  champ.style.borderColor = "rgba(255,100,100,0.8)";
+  // Message d'erreur sous le champ
+  const wrap = champ.closest(".tel-wrap") || champ;
+  let err = wrap.nextElementSibling;
+  if(!err || !err.classList.contains("champ-erreur")) {
+    err = document.createElement("span");
+    err.className = "champ-erreur";
+    wrap.insertAdjacentElement("afterend", err);
+  }
+  err.textContent = msg;
+  err.classList.add("visible");
+  champ.focus();
+}
+
+function effacerErreurChamp(id) {
+  const champ = document.getElementById(id);
+  if(!champ) return;
+  champ.style.borderColor = "";
+  const wrap = champ.closest(".tel-wrap") || champ;
+  const err = wrap.nextElementSibling;
+  if(err && err.classList.contains("champ-erreur")) {
+    err.classList.remove("visible");
+  }
+}
+
 // ── Commande ─────────────────────────────────────────────────
 async function validerCommande() {
-  if(!ETAT.panier.length) { afficherToast("⚠️ Votre panier est vide", "⚠️"); return; }
+  if(!ETAT.panier.length) {
+    afficherToast("⚠️ Votre panier est vide — ajoutez des articles avant de commander.", "⚠️");
+    return;
+  }
 
-  const nom     = document.getElementById("c-nom").value.trim();
-  const tel     = document.getElementById("c-tel").value.trim();
-  const email   = document.getElementById("c-email").value.trim();
-  const adresse = document.getElementById("c-adresse").value.trim();
+  // Validation client
+  if(!validerFormulaire()) return;
+
+  const nom      = document.getElementById("c-nom").value.trim();
+  const tel      = construireTelephone();   // +225XXXXXXXXXX
+  const email    = document.getElementById("c-email")?.value.trim()   || "";
+  const adresse  = document.getElementById("c-adresse")?.value.trim() || "";
   const paiement = document.querySelector("input[name='pay']:checked")?.value || "orange";
-
-  if(!nom || !tel) { afficherToast("⚠️ Nom et téléphone obligatoires", "⚠️"); return; }
 
   const sousTotal = ETAT.panier.reduce((s,x) => s + x.prix_actuel * x.qty, 0);
   const pct       = ETAT.reductionPct || 5;
   const remise    = ETAT.promoApplique ? Math.round(sousTotal * pct / 100) : 0;
+  const total     = sousTotal - remise;
+
+  // Désactiver le bouton le temps de la requête
+  const btn = document.querySelector(".btn-commander");
+  if(btn) { btn.disabled = true; btn.textContent = "⏳ Envoi en cours…"; }
 
   const payload = {
     client_nom       : nom,
@@ -389,13 +482,19 @@ async function validerCommande() {
     client_email     : email,
     client_adresse   : adresse,
     paiement,
-    articles : ETAT.panier.map(x => ({
-      id: x.id, nom: x.nom, categorie: x.categorie,
-      prix_actuel: x.prix_actuel, qty: x.qty,
-      photo: x.photo || ""
+    sous_total : sousTotal,
+    remise     : remise,
+    total      : total,
+    articles   : ETAT.panier.map(x => ({
+      id         : x.id,
+      nom        : x.nom,
+      categorie  : x.categorie,
+      prix_actuel: x.prix_actuel,
+      qty        : x.qty,
+      couleur    : x.couleur || "",
+      taille     : x.taille || "",
+      photo      : x.photo  || ""
     })),
-    total  : sousTotal - remise,
-    remise,
   };
 
   try {
@@ -407,26 +506,45 @@ async function validerCommande() {
     const data = await rep.json();
 
     if(data.succes) {
+      // Succès : afficher la confirmation
       fermerPanier();
       document.getElementById("confirm-num").textContent = "N° " + data.numero;
-      document.getElementById("btn-wa-confirm").onclick = () => window.open(data.url_whatsapp, "_blank");
+      document.getElementById("btn-wa-confirm").onclick =
+        () => window.open(data.url_whatsapp, "_blank");
       document.getElementById("confirm-overlay").classList.add("show");
-      // Vider le panier après confirmation
-      ETAT.panier = [];
+      // Vider le panier
+      ETAT.panier        = [];
+      ETAT.promoApplique = false;
+      ETAT.reductionPct  = 5;
       mettreAJourBadgePanier();
     } else {
-      afficherToast("❌ Erreur : " + (data.erreur || "Réessayez"), "❌");
+      // Erreur serveur — message lisible
+      const msg = data.erreur || "Une erreur est survenue. Réessayez ou commandez via WhatsApp.";
+      afficherToast("❌ " + msg, "❌");
     }
   } catch(e) {
-    afficherToast("❌ Erreur réseau. Essayez WhatsApp.", "❌");
+    // Erreur réseau
+    afficherToast(
+      "❌ Impossible de se connecter. Vérifiez votre connexion ou commandez directement sur WhatsApp.",
+      "❌"
+    );
+  } finally {
+    // Réactiver le bouton
+    if(btn) { btn.disabled = false; btn.textContent = "✅ Valider la commande"; }
   }
 }
 
 function commanderWhatsApp() {
-  const nom     = document.getElementById("c-nom")?.value || "";
-  const tel     = document.getElementById("c-tel")?.value || "";
-  const adresse = document.getElementById("c-adresse")?.value || "";
+  const nom      = document.getElementById("c-nom")?.value.trim()    || "";
+  const tel      = construireTelephone()                               || "";
+  const adresse  = document.getElementById("c-adresse")?.value.trim() || "";
   const paiement = document.querySelector("input[name='pay']:checked")?.value || "";
+
+  const paiementLabel = {
+    orange: "🟠 Orange Money",
+    momo  : "🟡 MTN MoMo",
+    wave  : "🔵 Wave",
+  }[paiement] || paiement;
 
   const lignes = ETAT.panier.map(x =>
     `• ${x.nom} × ${x.qty} = ${formaterPrix(x.prix_actuel * x.qty)}`
@@ -437,10 +555,26 @@ function commanderWhatsApp() {
   const remise    = ETAT.promoApplique ? Math.round(sousTotal * pct / 100) : 0;
   const total     = sousTotal - remise;
 
+  const ligneRemise = remise > 0 ? `🎁 Remise : -${formaterPrix(remise)}\n` : "";
+
   const msg = encodeURIComponent(
-    `Bonjour IKLILOUNE 🌸\n\n*Ma commande :*\n${lignes}\n\n💰 *Total : ${formaterPrix(total)}*\n👤 ${nom}\n📞 ${tel}\n📍 ${adresse}\n💳 ${paiement}\n\nMerci !`
+    `Bonjour IKLILOUNE 🌸 *La Maison du Chic*\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n` +
+    `🛒 *Ma commande :*\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `${lignes}\n\n` +
+    `💰 Sous-total : ${formaterPrix(sousTotal)}\n` +
+    `${ligneRemise}` +
+    `✅ *TOTAL : ${formaterPrix(total)}*\n\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n` +
+    `👤 *Client :* ${nom}\n` +
+    `📞 *Tél :* ${tel}\n` +
+    `📍 *Livraison :* ${adresse || "À préciser"}\n` +
+    `💳 *Paiement :* ${paiementLabel}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `Je souhaite confirmer cette commande. Merci ! 🙏`
   );
-  window.open(`https://wa.me/2250104144141?text=${msg}`, "_blank");
+  window.open(`https://wa.me/${WA_BOUTIQUE}?text=${msg}`, "_blank");
 }
 
 function fermerConfirm() {

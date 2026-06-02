@@ -314,7 +314,38 @@ img { max-width:100%; display:block; }
   border-radius:var(--radius-sm); color:white; font-family:'Nunito',sans-serif; font-size:13px;
 }
 .checkout-input::placeholder { color:rgba(255,255,255,0.3); }
-.checkout-input:focus { border-color:var(--or); outline:none; }
+.checkout-input:focus { border-color:var(--or); outline:none; box-shadow:0 0 0 3px rgba(201,146,42,0.12); }
+
+/* ── Champ téléphone avec drapeau CI ──────────────────────── */
+.tel-wrap {
+  display:flex; align-items:stretch; gap:0; margin-bottom:8px;
+}
+.tel-prefix {
+  display:flex; align-items:center; gap:5px;
+  padding:10px 12px;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(201,146,42,0.25); border-right:none;
+  border-radius:var(--radius-sm) 0 0 var(--radius-sm);
+  color:rgba(255,255,255,0.75); font-size:13px; font-weight:700;
+  white-space:nowrap; flex-shrink:0;
+  letter-spacing:0.5px;
+}
+.tel-input {
+  flex:1; margin-bottom:0 !important;
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0 !important;
+  border-left:none !important;
+}
+.tel-input:focus { border-color:var(--or); outline:none; }
+.tel-wrap:focus-within .tel-prefix {
+  border-color:var(--or);
+}
+
+/* Message d'erreur inline */
+.champ-erreur {
+  font-size:11px; color:#ff6b6b; margin:-4px 0 8px 4px;
+  display:none;
+}
+.champ-erreur.visible { display:block; }
 .btn-commander {
   width:100%; padding:14px; background:linear-gradient(135deg,var(--or),var(--or-clair));
   color:white; border:none; border-radius:24px; font-size:14px; font-weight:900;
@@ -657,6 +688,29 @@ img { max-width:100%; display:block; }
 }
 .field-input:focus { border-color:var(--or); box-shadow:0 0 0 3px rgba(201,146,42,0.08); }
 .field-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+/* ── Champ téléphone admin avec préfixe +225 ─────────────── */
+.tel-wrap-admin {
+  display:flex; align-items:stretch;
+}
+.tel-prefix-admin {
+  display:flex; align-items:center; padding:10px 10px;
+  background:var(--ivoire-2); border:1.5px solid var(--border);
+  border-right:none; border-radius:var(--radius-sm) 0 0 var(--radius-sm);
+  font-size:12px; font-weight:700; color:var(--brun); white-space:nowrap;
+}
+.tel-input-admin {
+  border-radius:0 var(--radius-sm) var(--radius-sm) 0 !important;
+}
+.tel-wrap-admin:focus-within .tel-prefix-admin { border-color:var(--or); }
+
+/* ── Champ téléphone popup inscription ───────────────────── */
+.popup-tel-wrap { flex-wrap:nowrap !important; align-items:center; gap:6px !important; }
+.popup-prefix {
+  font-size:12px; font-weight:700; color:rgba(255,255,255,0.7);
+  white-space:nowrap; flex-shrink:0;
+}
+.popup-tel-wrap input { flex:1; }
 .tags-wrap { display:flex; flex-wrap:wrap; gap:5px; padding:7px; border:1.5px solid var(--border); border-radius:var(--radius-sm); min-height:40px; cursor:text; transition:var(--transition); }
 .tags-wrap:focus-within { border-color:var(--or); }
 .tag-item { display:flex; align-items:center; gap:4px; padding:3px 8px; border-radius:10px; font-size:11px; font-weight:700; }

@@ -1159,11 +1159,18 @@ function fermerModalClient() {
 
 /** Enregistre un client ajouté manuellement depuis l'admin. */
 async function sauvegarderClientManuel() {
-  const prenom = document.getElementById("mc-prenom")?.value.trim();
-  const tel    = document.getElementById("mc-tel")?.value.trim();
+  const prenom   = document.getElementById("mc-prenom")?.value.trim();
+  const telRaw   = document.getElementById("mc-tel")?.value.trim() || "";
+  // Construire le numéro complet +225
+  const chiffres = telRaw.replace(/\D/g, "");
+  const tel      = chiffres ? "+225" + chiffres : "";
 
   if (!prenom || !tel) {
-    afficherToast("⚠️ Prénom et téléphone obligatoires", "⚠️");
+    afficherToast("⚠️ Prénom et numéro de téléphone obligatoires.", "⚠️");
+    return;
+  }
+  if (chiffres.length < 8) {
+    afficherToast("⚠️ Le numéro doit contenir au moins 8 chiffres.", "⚠️");
     return;
   }
 
@@ -1185,12 +1192,12 @@ async function sauvegarderClientManuel() {
     if (data.succes) {
       fermerModalClient();
       chargerTableClients();
-      afficherToast(`✅ ${prenom} ajouté au registre clients`);
+      afficherToast(`✅ ${prenom} ajouté au registre clients avec succès.`);
     } else {
-      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+      afficherToast("❌ " + (data.erreur || "Impossible d'ajouter le client. Réessayez."), "❌");
     }
   } catch (e) {
-    afficherToast("❌ Erreur réseau", "❌");
+    afficherToast("❌ Erreur de connexion — vérifiez votre réseau et réessayez.", "❌");
   }
 }
 

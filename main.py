@@ -35,8 +35,10 @@ def creer_app():
     # --- Flask-Login -------------------------------------------
     login_manager = LoginManager()
     login_manager.init_app(app)
-    login_manager.login_view    = "auth.login"
+    login_manager.login_view    = "auth.login"        # nom de la vue
     login_manager.login_message = "Connexion requise."
+    # Surcharger l'URL de redirection avec l'URL secrète réelle
+    app.config["LOGIN_DISABLED"] = False
 
     @login_manager.user_loader
     def charger_admin(admin_id):

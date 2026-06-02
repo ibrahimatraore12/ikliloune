@@ -1,18 +1,27 @@
 # =============================================================
 # routes/commande.py — Workflow de commande client
 # =============================================================
+# Flux :
+#   1. Client remplit le formulaire (panier côté JS)
+#   2. POST /api/commande → enregistrement BDD + numéro IK###
+#   3. Réponse JSON → JS ouvre WhatsApp avec récapitulatif
+# =============================================================
 
 import json
 from flask import Blueprint, request, jsonify
 from backend.database import db
 from backend.models.commande import Commande
 from backend.models.client   import Client
-from backend.services.commande_service import (
-    generer_numero_commande,
-    formater_message_whatsapp
+from backend.services.commande_service import formater_message_whatsapp
+from backend.utils.erreurs import (
+    message_convivial, valider_champs, nettoyer_int, nettoyer_telephone
 )
 
 commande_bp = Blueprint("commande", __name__)
+
+
+# ── Validation des champs obligatoires ─────────────────────────
+CHAMPS_REQUIS = ["client_nom", "client_telephone", "articles"]
 
 
 @commande_bp.route("/api/commande", methods=["POST"])
@@ -20,116 +29,193 @@ def passer_commande():
     """
     Enregistre une commande en base de données.
 
-    Reçoit (JSON) :
-        client_nom, client_telephone, client_email,
-        client_adresse, articles, total, paiement, remise
+    Payload JSON attendu :
+        client_nom        (str, requis)
+        client_telephone  (str, requis)
+        client_email      (str, optionnel)
+        client_adresse    (str, optionnel)
+        articles          (list, requis — au moins 1 article)
+        sous_total        (int, FCFA)
+        total             (int, FCFA après remise)
+        remise            (int, montant remise en FCFA)
+        paiement          (str — "orange" | "momo" | "wave")
+        canal             (str — "site_web" par défaut)
 
     Retourne :
-        JSON : {succes, numero, url_whatsapp}
+        { succes, numero, url_whatsapp }
     """
+    # ── 1. Récupérer et vérifier le JSON ──────────────────────
+    data = request.get_json(silent=True)
+
+    if not data:
+        return jsonify({
+            "erreur": "Aucune donnée reçue. Vérifiez votre connexion et réessayez."
+        }), 400
+
+    # ── 2. Champs obligatoires ─────────────────────────────────
+    err = valider_champs(data, ["client_nom", "client_telephone"])
+    if err:
+        return jsonify({"erreur": err}), 400
+
+    # Nom : minimum 2 caractères
+    nom = data["client_nom"].strip()
+    if len(nom) < 2:
+        return jsonify({
+            "erreur": "Le nom doit contenir au moins 2 caractères."
+        }), 400
+
+    # Téléphone : normalisation +225
     try:
-        data = request.get_json()
+        telephone = nettoyer_telephone(data["client_telephone"])
+    except ValueError as e:
+        return jsonify({"erreur": str(e)}), 400
 
-        # Validation des champs obligatoires
-        if not data.get("client_nom") or not data.get("client_telephone"):
-            return jsonify({"erreur": "Nom et téléphone obligatoires"}), 400
+    # Panier non vide
+    articles = data.get("articles", [])
+    if not articles or len(articles) == 0:
+        return jsonify({
+            "erreur": "Votre panier est vide. Ajoutez au moins un article avant de commander."
+        }), 400
 
-        if not data.get("articles"):
-            return jsonify({"erreur": "Panier vide"}), 400
+    # ── 3. Conversion sécurisée des montants ──────────────────
+    try:
+        sous_total      = nettoyer_int(data.get("sous_total") or data.get("total"), 0, "sous-total")
+        remise_montant  = nettoyer_int(data.get("remise"),    0, "remise")
+        total           = nettoyer_int(data.get("total"),     0, "total")
+    except ValueError as e:
+        return jsonify({"erreur": str(e)}), 400
 
-        # Créer la commande
+    # Cohérence : total doit être >= 0
+    if total < 0:
+        return jsonify({
+            "erreur": "Le montant total ne peut pas être négatif."
+        }), 400
+
+    # ── 4. Créer la commande en base ──────────────────────────
+    try:
+        # Séparer prénom / nom si format "Prénom Nom"
+        mots = nom.split()
+        prenom = mots[0] if len(mots) >= 2 else ""
+        nom_famille = " ".join(mots[1:]) if len(mots) >= 2 else nom
+
         commande = Commande(
-            numero           = generer_numero_commande(),
-            client_nom       = data["client_nom"].strip(),
-            client_telephone = data["client_telephone"].strip(),
-            client_email     = data.get("client_email", "").strip(),
-            client_adresse   = data.get("client_adresse", "").strip(),
-            articles_json    = json.dumps(data["articles"]),
-            total            = int(data.get("total", 0)),
-            remise           = int(data.get("remise", 0)),
-            paiement         = data.get("paiement", ""),
-            statut           = "en_attente"
+            # numero généré automatiquement par _generer_numero()
+            client_nom       = nom,
+            client_prenom    = data.get("client_prenom", prenom).strip(),
+            client_telephone = telephone,
+            client_adresse   = (data.get("client_adresse") or "").strip(),
+            articles_json    = json.dumps(articles, ensure_ascii=False),
+            sous_total       = sous_total,
+            remise_montant   = remise_montant,
+            total            = total,
+            mode_paiement    = data.get("paiement", "") or data.get("mode_paiement", ""),
+            canal            = data.get("canal", "site_web"),
+            statut           = "recue"
         )
-
         db.session.add(commande)
 
-        # Enregistrer ou mettre à jour le client dans le registre
-        email = data.get("client_email", "").strip()
+        # ── 5. Registre client (optionnel) ─────────────────────
+        email = (data.get("client_email") or "").strip().lower()
         if email:
             client = Client.query.filter_by(email=email).first()
             if client:
-                client.nb_commandes += 1
+                # Client connu : incrémenter ses commandes
+                client.nb_commandes  = (client.nb_commandes or 0) + 1
+                client.telephone     = telephone   # mettre à jour si changé
             else:
+                # Nouveau client : l'enregistrer
                 client = Client(
-                    prenom       = data["client_nom"].split()[0],
-                    nom          = " ".join(data["client_nom"].split()[1:]),
+                    prenom       = prenom or nom,
+                    nom          = nom_famille,
                     email        = email,
-                    telephone    = data["client_telephone"],
-                    source       = "commande",
+                    telephone    = telephone,
+                    source       = "commande_site",
                     nb_commandes = 1
                 )
                 db.session.add(client)
 
         db.session.commit()
 
-        # Générer l'URL WhatsApp pour confirmation
+        # ── 6. URL WhatsApp de confirmation ───────────────────
         url_wa = formater_message_whatsapp(commande)
 
-        print(f"✅ Commande enregistrée : {commande.numero}")
+        print(f"✅ Commande enregistrée : {commande.numero} — {nom} — {total} FCFA")
         return jsonify({
-            "succes"        : True,
-            "numero"        : commande.numero,
-            "url_whatsapp"  : url_wa
+            "succes"       : True,
+            "numero"       : commande.numero,
+            "url_whatsapp" : url_wa
         })
 
     except Exception as e:
         db.session.rollback()
         print(f"❌ Erreur commande : {e}")
-        return jsonify({"erreur": str(e)}), 500
+        return jsonify({"erreur": message_convivial(e)}), 500
 
 
 @commande_bp.route("/api/verifier-promo", methods=["POST"])
 def verifier_code_promo():
     """
-    Vérifie un code promo saisi par le client.
-    Appelé en temps réel quand le client tape son code.
+    Vérifie un code promo saisi par le client en temps réel.
 
-    Reçoit  : {"code": "ETE25"}
-    Retourne: {"valide": true, "reduction_pct": 10, "message": "Code valide !"}
+    Payload : { "code": "IKLI5" }
+    Réponse : { valide, reduction_pct, message }
     """
     from backend.models.code_promo import CodePromo
 
-    data = request.get_json()
-    code_str = data.get("code", "").strip().upper()
+    data = request.get_json(silent=True) or {}
+    code_str = (data.get("code") or "").strip().upper()
 
     if not code_str:
-        return jsonify({"valide": False, "message": "Code vide"}), 400
+        return jsonify({
+            "valide"  : False,
+            "message" : "Veuillez saisir un code promo."
+        }), 400
 
-    # Codes fixes intégrés (toujours actifs)
+    if len(code_str) > 20:
+        return jsonify({
+            "valide"  : False,
+            "message" : "Ce code promo est trop long."
+        }), 400
+
+    # ── Codes fixes intégrés (toujours actifs) ─────────────────
     codes_fixes = {
         "IKLI5"     : 5,
         "BIENVENUE" : 5,
     }
-
     if code_str in codes_fixes:
+        pct = codes_fixes[code_str]
         return jsonify({
-            "valide"       : True,
-            "reduction_pct": codes_fixes[code_str],
-            "message"      : f"✅ Code valide ! -{codes_fixes[code_str]}% appliqué"
+            "valide"        : True,
+            "reduction_pct" : pct,
+            "message"       : f"✅ Code valide ! -{pct}% appliqué sur votre commande."
         })
 
-    # Chercher dans la base de données
-    code = CodePromo.query.filter_by(code=code_str).first()
+    # ── Recherche en base de données ───────────────────────────
+    try:
+        code = CodePromo.query.filter_by(code=code_str).first()
+    except Exception as e:
+        return jsonify({
+            "valide"  : False,
+            "message" : "Impossible de vérifier le code pour l'instant. Réessayez."
+        }), 500
 
     if not code:
-        return jsonify({"valide": False, "message": "❌ Code inconnu"}), 200
+        return jsonify({
+            "valide"  : False,
+            "message" : "❌ Ce code promo n'existe pas ou a expiré."
+        })
 
     valide, msg = code.est_valide()
     if not valide:
-        return jsonify({"valide": False, "message": f"❌ {msg}"}), 200
+        # Traduire les messages techniques éventuels
+        msg_propre = msg or "Ce code n'est plus valide."
+        return jsonify({
+            "valide"  : False,
+            "message" : f"❌ {msg_propre}"
+        })
 
     return jsonify({
-        "valide"       : True,
-        "reduction_pct": code.reduction_pct,
-        "message"      : f"✅ -{code.reduction_pct}% appliqué — {code.description or ''}"
+        "valide"        : True,
+        "reduction_pct" : code.reduction_pct,
+        "message"       : f"✅ -{code.reduction_pct}% appliqué — {code.description or 'Code valide !'}"
     })

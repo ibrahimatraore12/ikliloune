@@ -943,7 +943,13 @@
       </div>
       <div class="field-group">
         <label class="field-lbl">Téléphone * (identifiant principal)</label>
-        <input class="field-input" id="mc-tel" placeholder="+225 07 00 00 00 00" type="tel">
+        <div class="tel-wrap-admin">
+          <span class="tel-prefix-admin">🇨🇮 +225</span>
+          <input class="field-input tel-input-admin" id="mc-tel"
+                 placeholder="07 00 00 00 00" type="tel"
+                 maxlength="10" inputmode="numeric"
+                 oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+        </div>
       </div>
       <div class="field-group">
         <label class="field-lbl">Email (facultatif)</label>
