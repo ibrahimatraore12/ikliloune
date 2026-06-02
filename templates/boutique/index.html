@@ -324,12 +324,37 @@
 <!-- ══ CONFIRMATION COMMANDE ═════════════════════════════════ -->
 <div class="confirm-overlay" id="confirm-overlay">
   <div class="confirm-box" role="dialog" aria-modal="true">
-    <div style="font-size:56px;margin-bottom:16px">🎉</div>
+    <div style="font-size:56px;margin-bottom:8px">🎉</div>
     <h2>Commande confirmée !</h2>
     <p>Notre équipe vous contacte très bientôt pour la livraison.</p>
-    <div class="confirm-num" id="confirm-num">N° CMD-2025-XXXXX</div>
-    <button class="btn-wa-confirm" id="btn-wa-confirm">💬 Confirmer sur WhatsApp</button>
-    <button class="btn-retour" onclick="fermerConfirm()">Retour à la boutique</button>
+    <div class="confirm-num" id="confirm-num">N° IK000-00000000</div>
+
+    <!-- Étape 1 : bouton WhatsApp principal -->
+    <a class="btn-wa-confirm" id="btn-wa-confirm"
+       href="#" target="_blank" rel="noopener noreferrer">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg"
+           alt="" width="20" height="20" style="vertical-align:middle;margin-right:6px">
+      Envoyer ma commande sur WhatsApp
+    </a>
+
+    <!-- Étape 2 : fallback copier le lien -->
+    <div class="confirm-fallback" id="confirm-fallback" style="display:none">
+      <p class="confirm-fallback-titre">📋 Ou copiez ce lien et ouvrez-le dans WhatsApp :</p>
+      <div class="confirm-lien-wrap">
+        <input type="text" id="confirm-lien-input" class="confirm-lien-input"
+               readonly onclick="this.select()">
+        <button class="btn-copier" id="btn-copier" onclick="copierLienWA()">📋 Copier</button>
+      </div>
+      <p class="confirm-fallback-hint">Collez ce lien dans votre navigateur ou dans WhatsApp.</p>
+    </div>
+
+    <!-- Aperçu du message -->
+    <details class="confirm-apercu-wrap">
+      <summary>👁️ Voir le message qui sera envoyé</summary>
+      <pre class="confirm-apercu" id="confirm-apercu"></pre>
+    </details>
+
+    <button class="btn-retour" onclick="fermerConfirm()">← Retour à la boutique</button>
   </div>
 </div>
 

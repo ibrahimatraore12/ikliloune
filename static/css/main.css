@@ -424,15 +424,69 @@ img { max-width:100%; display:block; }
 }
 .confirm-overlay.show { display:flex; }
 .confirm-box {
-  background:white; border-radius:20px; padding:36px 32px;
-  max-width:420px; width:90%; text-align:center; border:2px solid var(--or);
-  animation:popIn 0.35s ease;
+  background:white; border-radius:20px; padding:32px 28px;
+  max-width:460px; width:92%; text-align:center; border:2px solid var(--or);
+  animation:popIn 0.35s ease; max-height:90vh; overflow-y:auto;
 }
-.confirm-box h2 { font-family:'Playfair Display',serif; font-size:26px; margin-bottom:10px; }
-.confirm-box p { color:var(--brun-clair); font-size:13px; line-height:1.6; margin-bottom:16px; }
-.confirm-num { background:var(--ivoire-2); border-radius:var(--radius-sm); padding:12px; font-weight:800; font-size:16px; color:var(--or-sombre); margin-bottom:18px; }
-.btn-wa-confirm { width:100%; padding:13px; background:#25D366; color:white; border:none; border-radius:24px; font-size:14px; font-weight:800; display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:10px; }
-.btn-retour { width:100%; padding:11px; background:var(--ivoire-2); color:var(--brun); border:none; border-radius:24px; font-size:13px; font-weight:700; }
+.confirm-box h2 { font-family:'Playfair Display',serif; font-size:24px; margin-bottom:8px; }
+.confirm-box p { color:var(--brun-clair); font-size:13px; line-height:1.6; margin-bottom:14px; }
+.confirm-num {
+  background:var(--ivoire-2); border-radius:var(--radius-sm);
+  padding:12px; font-weight:800; font-size:17px;
+  color:var(--or-sombre); margin-bottom:18px; letter-spacing:1px;
+}
+/* Bouton WhatsApp principal — <a> stylisé en bouton */
+.btn-wa-confirm {
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  width:100%; padding:13px; background:#25D366; color:white;
+  border:none; border-radius:24px; font-size:14px; font-weight:800;
+  margin-bottom:10px; text-decoration:none; cursor:pointer;
+  transition:background 0.2s, transform 0.15s;
+}
+.btn-wa-confirm:hover { background:#1ebd5a; transform:translateY(-1px); color:white; }
+.btn-wa-confirm:active { transform:translateY(0); }
+
+/* Fallback copier le lien */
+.confirm-fallback {
+  background:#fff8e8; border:1.5px solid var(--or); border-radius:12px;
+  padding:14px 16px; margin-bottom:12px; text-align:left;
+}
+.confirm-fallback-titre { font-size:12px; font-weight:700; color:var(--brun); margin:0 0 8px; }
+.confirm-lien-wrap { display:flex; gap:6px; }
+.confirm-lien-input {
+  flex:1; font-size:10px; padding:8px 10px; border:1px solid var(--border);
+  border-radius:8px; color:var(--brun); background:white; font-family:monospace;
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+}
+.btn-copier {
+  padding:8px 12px; background:var(--or); color:white;
+  border:none; border-radius:8px; font-size:11px; font-weight:700; cursor:pointer;
+  white-space:nowrap; flex-shrink:0;
+}
+.btn-copier:hover { background:var(--or-sombre); }
+.confirm-fallback-hint { font-size:10px; color:var(--brun-clair); margin:6px 0 0; }
+
+/* Aperçu du message */
+.confirm-apercu-wrap {
+  margin-bottom:12px; text-align:left;
+}
+.confirm-apercu-wrap summary {
+  font-size:11px; color:var(--brun-clair); cursor:pointer;
+  padding:6px 0; font-weight:600;
+}
+.confirm-apercu {
+  background:var(--ivoire-2); border-radius:8px; padding:10px 12px;
+  font-size:10px; color:var(--brun); white-space:pre-wrap; font-family:monospace;
+  max-height:160px; overflow-y:auto; margin-top:6px; line-height:1.5;
+  border:1px solid var(--border);
+}
+
+.btn-retour {
+  width:100%; padding:11px; background:var(--ivoire-2); color:var(--brun);
+  border:1.5px solid var(--border); border-radius:24px; font-size:13px; font-weight:700;
+  cursor:pointer; transition:background 0.2s;
+}
+.btn-retour:hover { background:#ece8df; }
 
 /* ── Toast ───────────────────────────────────────────────────── */
 .toast {

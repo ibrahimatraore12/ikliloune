@@ -508,10 +508,7 @@ async function validerCommande() {
     if(data.succes) {
       // Succès : afficher la confirmation
       fermerPanier();
-      document.getElementById("confirm-num").textContent = "N° " + data.numero;
-      document.getElementById("btn-wa-confirm").onclick =
-        () => window.open(data.url_whatsapp, "_blank");
-      document.getElementById("confirm-overlay").classList.add("show");
+      afficherConfirmation(data.numero, data.url_whatsapp);
       // Vider le panier
       ETAT.panier        = [];
       ETAT.promoApplique = false;
@@ -577,8 +574,59 @@ function commanderWhatsApp() {
   window.open(`https://wa.me/${WA_BOUTIQUE}?text=${msg}`, "_blank");
 }
 
+// ── Affichage de la modal de confirmation ─────────────────────
+function afficherConfirmation(numero, urlWA) {
+  // Numéro de commande
+  document.getElementById("confirm-num").textContent = "N° " + numero;
+
+  // Bouton principal : simple href, s'ouvre dans un vrai navigateur
+  const btnWA = document.getElementById("btn-wa-confirm");
+  if(btnWA) btnWA.href = urlWA;
+
+  // Toujours afficher le fallback "copier le lien" — utile si popup bloqué
+  const fallback = document.getElementById("confirm-fallback");
+  if(fallback) fallback.style.display = "block";
+
+  const input = document.getElementById("confirm-lien-input");
+  if(input) input.value = urlWA;
+
+  // Aperçu du message décodé
+  try {
+    const txt = decodeURIComponent(urlWA.split("?text=")[1] || "");
+    const apercu = document.getElementById("confirm-apercu");
+    if(apercu) apercu.textContent = txt;
+  } catch(_) { /* silencieux */ }
+
+  document.getElementById("confirm-overlay").classList.add("show");
+}
+
+function afficherFallbackWA(urlWA) {
+  const fallback = document.getElementById("confirm-fallback");
+  if(fallback) fallback.style.display = "block";
+  const input = document.getElementById("confirm-lien-input");
+  if(input) { input.value = urlWA; input.select(); }
+}
+
+async function copierLienWA() {
+  const input = document.getElementById("confirm-lien-input");
+  if(!input) return;
+  try {
+    await navigator.clipboard.writeText(input.value);
+    const btn = document.getElementById("btn-copier");
+    if(btn) { btn.textContent = "✅ Copié !"; setTimeout(() => btn.textContent = "📋 Copier", 2500); }
+    afficherToast("✅ Lien copié ! Collez-le dans votre navigateur.");
+  } catch(e) {
+    input.select();
+    document.execCommand("copy");
+    afficherToast("✅ Lien copié !");
+  }
+}
+
 function fermerConfirm() {
   document.getElementById("confirm-overlay").classList.remove("show");
+  // Cacher le fallback pour la prochaine commande
+  const fb = document.getElementById("confirm-fallback");
+  if(fb) fb.style.display = "none";
 }
 
 // ── Pop-up email ──────────────────────────────────────────────
