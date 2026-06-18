@@ -57,3 +57,4 @@ desktop.ini
 
 # Render / Docker
 *.pid
+.python-version
