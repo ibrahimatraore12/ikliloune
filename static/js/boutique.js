@@ -294,7 +294,7 @@ function rendrePanier() {
       <div class="art-img">
         ${item.photo
           ? `<img src="/static/images/produits/${item.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:6px" alt="${item.nom}">`
-          : ({parfum:"��",sac:"👜",chaussure:"👟",vetement:"👗"}[item.categorie] || "📦")}
+          : ({parfum:"🌸",sac:"👜",chaussure:"👟",vetement:"👗"}[item.categorie] || "📦")}
       </div>
       <div class="art-info">
         <div class="art-nom">${item.nom}</div>
@@ -368,7 +368,7 @@ async function appliquerPromo(code) {
 }
 
 // ── Numéro WhatsApp boutique ──────────────────────────────────
-const WA_BOUTIQUE = "2250104144141";
+const WA_BOUTIQUE = "2250748956959";
 
 // ── Nettoyage téléphone en temps réel ─────────────────────────
 function nettoyerTelephone(input) {

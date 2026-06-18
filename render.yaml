@@ -70,9 +70,9 @@ services:
 
       # ── Contact et réseaux ──────────────────────────────────
       - key: NUMERO_WHATSAPP
-        value: "2250104144141"
+        value: "2250748956959"
 
-      - key: NUMERO_ORANGE_MONEY
+      - key: ORANGE_MONEY_NUM
         value: "0748956959"
 
       - key: NUMERO_MTN_MOMO
