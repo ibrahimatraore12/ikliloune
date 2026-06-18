@@ -32,41 +32,7 @@
 <!-- ══ NAVIGATION ═══════════════════════════════════════════ -->
 <nav class="navbar" id="navbar">
   <a class="nav-logo" href="/">
-    <div class="logo-sphere">
-      <!-- Logo cubique SVG identique à la maquette -->
-      <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <radialGradient id="bgN" cx="38%" cy="32%" r="65%">
-            <stop offset="0%" stop-color="#FAD4DC"/>
-            <stop offset="45%" stop-color="#F2AEBB"/>
-            <stop offset="100%" stop-color="#A85870"/>
-          </radialGradient>
-          <filter id="glowN">
-            <feGaussianBlur stdDeviation="0.7" result="blur"/>
-            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
-          </filter>
-          <linearGradient id="orN" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#F0C96B"/>
-            <stop offset="50%" stop-color="#C9922A"/>
-            <stop offset="100%" stop-color="#F0C96B"/>
-          </linearGradient>
-        </defs>
-        <circle cx="19" cy="19" r="18" fill="url(#bgN)"/>
-        <circle cx="19" cy="19" r="17" fill="none" stroke="url(#orN)" stroke-width="1.2" opacity="0.7"/>
-        <g filter="url(#glowN)">
-          <polygon points="19,8 29,14 19,20 9,14" fill="rgba(201,146,42,0.08)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
-          <polygon points="9,14 19,20 19,32 9,26"  fill="rgba(201,146,42,0.04)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
-          <polygon points="29,14 19,20 19,32 29,26" fill="rgba(240,201,107,0.06)" stroke="url(#orN)" stroke-width="1.5" stroke-linejoin="round"/>
-          <circle cx="19" cy="8"  r="1.4" fill="#F0C96B"/>
-          <circle cx="9"  cy="14" r="1.2" fill="#C9922A"/>
-          <circle cx="29" cy="14" r="1.2" fill="#C9922A"/>
-          <circle cx="19" cy="20" r="1.4" fill="#F0C96B"/>
-          <circle cx="9"  cy="26" r="1.2" fill="#C9922A"/>
-          <circle cx="29" cy="26" r="1.2" fill="#C9922A"/>
-          <circle cx="19" cy="32" r="1.2" fill="#F0C96B"/>
-        </g>
-      </svg>
-    </div>
+    <img src="{{ url_for('static', filename='images/logo-icone.png') }}" alt="IKLILOUNE" class="logo-img logo-img-nav">
     <div class="logo-textes">
       <span class="logo-nom">IKLILOUNE</span>
       <span class="logo-slogan">La Maison du Chic</span>
@@ -254,29 +220,7 @@
 <div class="popup-overlay" id="popup-overlay">
   <div class="popup-box" role="dialog" aria-modal="true" aria-label="Offre -5%">
     <div class="popup-top">
-      <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-        <defs>
-          <radialGradient id="bgPop" cx="38%" cy="32%" r="65%">
-            <stop offset="0%" stop-color="#FAD4DC"/>
-            <stop offset="45%" stop-color="#F2AEBB"/>
-            <stop offset="100%" stop-color="#A85870"/>
-          </radialGradient>
-          <linearGradient id="orPop" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#F0C96B"/>
-            <stop offset="100%" stop-color="#C9922A"/>
-          </linearGradient>
-        </defs>
-        <circle cx="28" cy="28" r="27" fill="url(#bgPop)"/>
-        <circle cx="28" cy="28" r="26" fill="none" stroke="url(#orPop)" stroke-width="1.3" opacity="0.7"/>
-        <polygon points="28,11 38,17 28,23 18,17" fill="rgba(201,146,42,0.1)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
-        <polygon points="18,17 28,23 28,35 18,29" fill="rgba(201,146,42,0.05)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
-        <polygon points="38,17 28,23 28,35 38,29" fill="rgba(240,201,107,0.07)" stroke="url(#orPop)" stroke-width="1.5" stroke-linejoin="round"/>
-        <circle cx="28" cy="11" r="1.8" fill="#F0C96B"/>
-        <circle cx="18" cy="17" r="1.5" fill="#C9922A"/>
-        <circle cx="38" cy="17" r="1.5" fill="#C9922A"/>
-        <circle cx="28" cy="23" r="1.8" fill="#F0C96B"/>
-        <circle cx="28" cy="35" r="1.5" fill="#F0C96B"/>
-      </svg>
+      <img src="{{ url_for('static', filename='images/logo-icone.png') }}" alt="IKLILOUNE" class="logo-img logo-img-popup">
       <p class="popup-tag">Offre exclusive · 1ère commande</p>
       <h2 class="popup-titre">Rejoignez<br><em>La Maison du Chic</em></h2>
       <button class="popup-close" onclick="fermerPopup()" aria-label="Fermer">✕</button>

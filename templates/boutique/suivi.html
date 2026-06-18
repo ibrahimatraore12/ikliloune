@@ -5,16 +5,7 @@
 {% block contenu %}
 <nav class="navbar">
   <a class="nav-logo" href="/">
-    <svg width="36" height="36" viewBox="0 0 38 38" fill="none">
-      <defs>
-        <radialGradient id="bgS" cx="38%" cy="32%" r="65%"><stop offset="0%" stop-color="#FAD4DC"/><stop offset="45%" stop-color="#F2AEBB"/><stop offset="100%" stop-color="#A85870"/></radialGradient>
-        <linearGradient id="orS" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#F0C96B"/><stop offset="50%" stop-color="#C9922A"/><stop offset="100%" stop-color="#F0C96B"/></linearGradient>
-      </defs>
-      <circle cx="19" cy="19" r="18" fill="url(#bgS)"/>
-      <polygon points="19,8 29,14 19,20 9,14" fill="none" stroke="url(#orS)" stroke-width="1.5"/>
-      <polygon points="9,14 19,20 19,32 9,26"  fill="none" stroke="url(#orS)" stroke-width="1.5"/>
-      <polygon points="29,14 19,20 19,32 29,26" fill="none" stroke="url(#orS)" stroke-width="1.5"/>
-    </svg>
+    <img src="{{ url_for('static', filename='images/logo-icone.png') }}" alt="IKLILOUNE" class="logo-img logo-img-nav">
     <div class="logo-textes">
       <span class="logo-nom">IKLILOUNE</span>
       <span class="logo-slogan">La Maison du Chic</span>

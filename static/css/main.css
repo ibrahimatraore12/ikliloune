@@ -75,6 +75,10 @@ img { max-width:100%; display:block; }
 }
 .nav-logo { display:flex; align-items:center; gap:10px; }
 .logo-sphere { flex-shrink:0; filter:drop-shadow(0 2px 6px rgba(242,174,187,0.4)); }
+.logo-img { display:block; object-fit:contain; }
+.logo-img-nav { width:42px; height:42px; flex-shrink:0; filter:drop-shadow(0 2px 6px rgba(242,174,187,0.4)); }
+.logo-img { display:block; object-fit:contain; }
+.logo-img-nav { width:42px; height:42px; flex-shrink:0; filter:drop-shadow(0 2px 6px rgba(242,174,187,0.4)); }
 .logo-textes { display:flex; flex-direction:column; line-height:1; }
 .logo-nom { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--noir-chaud); letter-spacing:2px; }
 .logo-slogan {
@@ -376,6 +380,7 @@ img { max-width:100%; display:block; }
   background:linear-gradient(135deg,var(--noir-chaud),#2D1F0A);
   padding:24px 28px; text-align:center; position:relative;
 }
+.logo-img-popup { width:56px; height:56px; margin:0 auto 4px; }
 .popup-tag { color:var(--or-clair); font-size:9px; letter-spacing:3px; text-transform:uppercase; font-weight:700; margin-bottom:8px; }
 .popup-titre { font-family:'Playfair Display',serif; font-size:24px; color:white; line-height:1.2; }
 .popup-titre em { color:var(--or-clair); font-style:italic; }
@@ -535,6 +540,8 @@ img { max-width:100%; display:block; }
 }
 .footer-col-intro { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:14px; line-height:1.6; }
 .footer-logo { display:flex; align-items:center; gap:12px; margin-bottom:16px; }
+.logo-img-footer { width:44px; height:44px; flex-shrink:0; }
+.logo-img-footer { width:44px; height:44px; flex-shrink:0; }
 .footer-logo-nom { font-family:'Playfair Display',serif; font-size:18px; color:white; letter-spacing:3px; line-height:1; }
 .footer-logo-slogan {
   font-size:9px; letter-spacing:2.5px; margin-top:3px;
@@ -618,6 +625,8 @@ img { max-width:100%; display:block; }
 .login-wrap { width:100%; display:flex; align-items:center; justify-content:center; padding:24px; }
 .login-box { background:rgba(255,255,255,0.04); border:1px solid rgba(242,174,187,0.25); border-radius:20px; padding:36px 32px; width:400px; max-width:100%; text-align:center; backdrop-filter:blur(8px); }
 .login-logo { margin-bottom:16px; filter:drop-shadow(0 4px 12px rgba(242,174,187,0.4)); }
+.logo-img-login { width:150px; height:auto; margin:0 auto; }
+.logo-img-login { width:150px; height:auto; margin:0 auto; }
 .login-titre { font-family:'Playfair Display',serif; font-size:26px; color:white; letter-spacing:3px; margin-bottom:6px; }
 .login-sous { font-size:12px; color:rgba(255,255,255,0.4); margin-bottom:24px; }
 .login-erreur { background:rgba(232,52,28,0.15); border:1px solid rgba(232,52,28,0.3); border-radius:8px; padding:10px; font-size:13px; color:#f87171; margin-bottom:16px; }
@@ -651,7 +660,8 @@ img { max-width:100%; display:block; }
   position:sticky; top:0; height:100vh; overflow-y:auto;
   border-right:1px solid rgba(201,146,42,0.15);
 }
-.sidebar-logo { padding:20px 16px 14px; border-bottom:1px solid rgba(201,146,42,0.15); }
+.sidebar-logo { padding:20px 16px 14px; border-bottom:1px solid rgba(201,146,42,0.15); display:flex; align-items:center; gap:10px; }
+.logo-img-sidebar { width:32px; height:32px; flex-shrink:0; }
 .sidebar-logo-nom  { display:block; font-family:'Playfair Display',serif; color:white; font-size:15px; letter-spacing:2px; }
 .sidebar-logo-role { display:block; font-size:9px; color:rgba(255,255,255,0.35); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
 .sidebar-nav { padding:12px 10px; }
