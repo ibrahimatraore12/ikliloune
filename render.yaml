@@ -83,7 +83,7 @@ services:
 
       # ── Réseaux sociaux ─────────────────────────────────────
       - key: INSTAGRAM_URL
-        value: "https://instagram.com/ikliloune"
+        value: "https://www.instagram.com/ikliloune_chic?igsh=ZDh6dmQ3MmdleGp1"
 
       - key: FACEBOOK_URL
         value: "https://facebook.com/ikliloune"

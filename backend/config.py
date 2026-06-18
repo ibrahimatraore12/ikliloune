@@ -52,7 +52,7 @@ NUMERO_WHATSAPP2 = os.environ.get("NUMERO_WHATSAPP2", "2250585826888")  # numér
 EMAIL_MAGASIN    = os.environ.get("EMAIL_MAGASIN",    "contact@ikliloune.com")
 
 # --- Réseaux sociaux ------------------------------------------
-INSTAGRAM_URL = os.environ.get("INSTAGRAM_URL", "https://instagram.com/ikliloune")
+INSTAGRAM_URL = os.environ.get("INSTAGRAM_URL", "https://www.instagram.com/ikliloune_chic?igsh=ZDh6dmQ3MmdleGp1")
 FACEBOOK_URL  = os.environ.get("FACEBOOK_URL",  "https://facebook.com/ikliloune")
 TIKTOK_URL    = os.environ.get("TIKTOK_URL",    "https://tiktok.com/@ikliloune")
 SNAPCHAT_URL  = os.environ.get("SNAPCHAT_URL",  "https://snapchat.com/add/ikliloune")
