@@ -47,7 +47,7 @@ SEUIL_STOCK_BAS  = int(os.environ.get("SEUIL_STOCK_BAS",  "3"))
 SEUIL_STOCK_HAUT = int(os.environ.get("SEUIL_STOCK_HAUT", "10"))
 
 # --- Contact magasin ------------------------------------------
-NUMERO_WHATSAPP  = os.environ.get("NUMERO_WHATSAPP", "2250748956959")   # numéro principal
+NUMERO_WHATSAPP  = os.environ.get("NUMERO_WHATSAPP", "2250104144141")   # numéro principal
 NUMERO_WHATSAPP2 = os.environ.get("NUMERO_WHATSAPP2", "2250585826888")  # numéro secondaire
 EMAIL_MAGASIN    = os.environ.get("EMAIL_MAGASIN",    "contact@ikliloune.com")
 

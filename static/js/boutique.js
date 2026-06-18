@@ -368,7 +368,7 @@ async function appliquerPromo(code) {
 }
 
 // ── Numéro WhatsApp boutique ──────────────────────────────────
-const WA_BOUTIQUE = "2250748956959";
+const WA_BOUTIQUE = "2250104144141";
 
 // ── Nettoyage téléphone en temps réel ─────────────────────────
 function nettoyerTelephone(input) {
