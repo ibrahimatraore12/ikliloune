@@ -1,0 +1,380 @@
+[
+  {
+    "nom": "Sac Tom&Eva Y-Lock",
+    "description": "Sac à main Tom&Eva serrure Y, cuir grainé souple. Anse rigide et bandoulière amovible.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Bordeaux",
+    "prix": 35000,
+    "photo": "sac-tomeva-ylock-bordeaux.webp"
+  },
+  {
+    "nom": "Sac Gallantry Tote Anneau",
+    "description": "Grand sac tote Gallantry Paris, anneau doré central, cuir grainé, deux anses.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 30000,
+    "photo": "sac-gallantry-tote-anneau-noir.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Tote",
+    "description": "Grand sac tote Jacques Esterel, cuir grainé bicolore, anneaux dorés, bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 25000,
+    "photo": "sac-jesterel-tote-noir.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Tote",
+    "description": "Grand sac tote Jacques Esterel, cuir grainé bicolore, anneaux dorés, bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Marine",
+    "prix": 25000,
+    "photo": "sac-jesterel-tote-marine.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Tote",
+    "description": "Grand sac tote Jacques Esterel, cuir grainé bicolore, anneaux dorés, bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Rouge/Caramel",
+    "prix": 25000,
+    "photo": "sac-jesterel-tote-rouge.webp"
+  },
+  {
+    "nom": "Mini Sac Jacques Esterel Kelly",
+    "description": "Mini sac à main structuré, fermoir doré orné, anse rigide et chaîne. Style soirée ou quotidien chic.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Blanc/Noir",
+    "prix": 22000,
+    "photo": "sac-jesterel-kelly-blanc-noir.webp"
+  },
+  {
+    "nom": "Mini Sac Jacques Esterel Kelly",
+    "description": "Mini sac à main structuré, fermoir doré orné, anse rigide et chaîne. Style soirée ou quotidien chic.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 22000,
+    "photo": "sac-jesterel-kelly-noir.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Bicolore Violet",
+    "description": "Sac Tom&Eva cuir lisse bicolore violet et noir, poignée rigide arrondie, fermeture pression.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Violet/Noir",
+    "prix": 30000,
+    "photo": "sac-tomeva-bicolore-violet.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Docteur",
+    "description": "Sac Jacques Esterel style docteur, rabat bicolore, fermeture tournante dorée, anse et bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Orange/Caramel",
+    "prix": 28000,
+    "photo": "sac-jesterel-docteur-orange.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Docteur",
+    "description": "Sac Jacques Esterel style docteur, rabat bicolore, fermeture tournante dorée, anse et bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Blanc/Marine",
+    "prix": 28000,
+    "photo": "sac-jesterel-docteur-marine.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Docteur",
+    "description": "Sac Jacques Esterel style docteur, rabat bicolore, fermeture tournante dorée, anse et bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Doré/Caramel",
+    "prix": 28000,
+    "photo": "sac-jesterel-docteur-dore.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Docteur",
+    "description": "Sac Jacques Esterel style docteur, rabat bicolore, fermeture tournante dorée, anse et bandoulière.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 28000,
+    "photo": "sac-jesterel-docteur-noir.webp"
+  },
+  {
+    "nom": "Parfum Suddenly",
+    "description": "Suddenly Fragrances 75ml Eau de Parfum. Diamonds (blanc), Lovely (blanc), Chalou (rose).",
+    "categorie": "parfum",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 10000,
+    "photo": "parfum-suddenly-groupe.webp"
+  },
+  {
+    "nom": "Parfum Suddenly",
+    "description": "Suddenly Fragrances 75ml. Diamonds (notes florales), Lovely (floral doux), Chalou (rose poudré).",
+    "categorie": "parfum",
+    "genre": "femme",
+    "couleur_principale": "Détail",
+    "prix": 10000,
+    "photo": "parfum-suddenly-diamonds-lovely-chalou.webp"
+  },
+  {
+    "nom": "Brume Parfumée Corps Montagne",
+    "description": "Brumes parfumées 250ml. Bellaya, Rêuh Al Arab, Rouge Absolu, Mya Belle, Victoria, Mykonos.",
+    "categorie": "parfum",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 7000,
+    "photo": "parfum-brume-corps-montagne.webp"
+  },
+  {
+    "nom": "Parfum El Nabil",
+    "description": "El Nabil Luxury EDP 65ml. Musc Night, Musc Mayssane, Lune de Miel.",
+    "categorie": "parfum",
+    "genre": "mixte",
+    "couleur_principale": "Groupe",
+    "prix": 15000,
+    "photo": "parfum-elnabil-groupe.webp"
+  },
+  {
+    "nom": "Parfum Zara Femme",
+    "description": "Zara Woman Collection. Pink Flambé, Tuberose Summer, Gardenia & Orchid, Gardenia & Wonder Rose.",
+    "categorie": "parfum",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 17000,
+    "photo": "parfum-zara-femme-groupe.webp"
+  },
+  {
+    "nom": "Parfum G.Bellini",
+    "description": "G.Bellini Fragrances 75ml EDP. One Fragrance (doré), Deep (noir). Pour homme.",
+    "categorie": "parfum",
+    "genre": "homme",
+    "couleur_principale": "Groupe",
+    "prix": 10000,
+    "photo": "parfum-gbellini-homme.webp"
+  },
+  {
+    "nom": "Parfum El Nabil Iconic Oud",
+    "description": "El Nabil Iconic Oud 65ml EDP. Fragrance orientale boisée.",
+    "categorie": "parfum",
+    "genre": "homme",
+    "couleur_principale": "Doré",
+    "prix": 30000,
+    "photo": "parfum-elnabil-oud-homme.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Selle",
+    "description": "Sac bandoulière selle Jacques Esterel Paris, cuir bicolore patchwork, style contemporain.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Marine/Blanc/Caramel",
+    "prix": 20000,
+    "photo": "sac-jesterel-selle-marine.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Selle",
+    "description": "Sac bandoulière selle Jacques Esterel Paris, cuir bicolore patchwork, style contemporain.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Noir/Beige",
+    "prix": 20000,
+    "photo": "sac-jesterel-selle-noir.webp"
+  },
+  {
+    "nom": "Sac Jacques Esterel Selle",
+    "description": "Sac bandoulière selle Jacques Esterel Paris, cuir bicolore patchwork, style contemporain.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Gris/Caramel",
+    "prix": 20000,
+    "photo": "sac-jesterel-selle-gris.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Chevron Tressé",
+    "description": "Sac Tom&Eva Paris corps raphia tressé, rabat cuir en V, fermeture centrale, anse rigide.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Rouge/Bordeaux",
+    "prix": 35000,
+    "photo": "sac-tomeva-chevron-rouge.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Chevron Tressé",
+    "description": "Sac Tom&Eva Paris corps raphia tressé, rabat cuir en V, fermeture centrale, anse rigide.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Fuchsia/Prune",
+    "prix": 35000,
+    "photo": "sac-tomeva-chevron-fuchsia.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Chevron Tressé",
+    "description": "Sac Tom&Eva Paris corps raphia naturel tressé, rabat cuir en V caramel, fermeture centrale, anse.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Caramel/Naturel",
+    "prix": 35000,
+    "photo": "sac-tomeva-chevron-caramel.webp"
+  },
+  {
+    "nom": "Sac Gallantry Shopping Matelassé",
+    "description": "Grand sac shopping Gallantry Paris, cuir matelassé souple, chaîne dorée breloques, double anse.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Rouge",
+    "prix": 20000,
+    "photo": "sac-gallantry-shopping-rouge-marine.webp"
+  },
+  {
+    "nom": "Mini Sac à Main Rivets",
+    "description": "Mini sac à main orné de rivets argentés, anse rigide colorée. Bleu ciel, Rouge, Lilas.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 15000,
+    "photo": "sac-rivets-bleu-rouge-lilas.webp"
+  },
+  {
+    "nom": "Sac Gallantry Croco",
+    "description": "Sac Gallantry Paris motif crocodile verni, anneau doré, double anse. Aussi disponible en Noir.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Vert",
+    "prix": 28000,
+    "photo": "sac-gallantry-croco-vert.webp"
+  },
+  {
+    "nom": "Sac Gallantry Shopping Matelassé",
+    "description": "Grand sac shopping Gallantry Paris, cuir matelassé souple, chaîne dorée breloques, double anse.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Fuchsia",
+    "prix": 20000,
+    "photo": "sac-gallantry-shopping-fuchsia.webp"
+  },
+  {
+    "nom": "Portefeuille Gallantry Paris",
+    "description": "Portefeuille Gallantry Paris cuir grainé, zip bas, nombreux rangements. Caramel, Noir, Rouge, Blanc.",
+    "categorie": "maroquinerie",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 15000,
+    "photo": "portefeuille-gallantry-groupe.webp"
+  },
+  {
+    "nom": "Parfum Zara Homme",
+    "description": "Zara Man Collection. Seoul, Blue Spirit, Silver, 800 Black Winter, Navy Black.",
+    "categorie": "parfum",
+    "genre": "homme",
+    "couleur_principale": "Groupe",
+    "prix": 17000,
+    "photo": "parfum-zara-homme-groupe.webp"
+  },
+  {
+    "nom": "Bracelet Cuir Homme",
+    "description": "Bracelets cuir tressé homme. Marron/ancre argentée, Noir tressé, Pierres naturelles œil de tigre.",
+    "categorie": "accessoire",
+    "genre": "homme",
+    "couleur_principale": "Groupe",
+    "prix": 10000,
+    "photo": "bracelet-cuir-homme.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Y-Lock",
+    "description": "Photo vitrine — 4 couleurs disponibles: Kaki, Noir, Bordeaux, Marine",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 35000,
+    "photo": "sac-tomeva-ylock-groupe-4couleurs.webp"
+  },
+  {
+    "nom": "Minaudière Tom&Eva Strass",
+    "description": "Minaudière ovale Tom&Eva Paris, entièrement couverte de strass noirs scintillants, anse transparente.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 25000,
+    "photo": "minaudiere-tomeva-strass-noir.webp"
+  },
+  {
+    "nom": "Minaudière Bijoux Ovale",
+    "description": "Minaudière ovale brodée de bijoux. Vert émeraude, Noir, Argent/Doré. 20,000 FCFA.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 20000,
+    "photo": "minaudiere-bijoux-ovale-groupe.webp"
+  },
+  {
+    "nom": "Minaudière Bijoux Ovale",
+    "description": "Minaudière ovale brodée de pierres vertes émeraude et strass dorés, fermoir antique.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Vert Émeraude",
+    "prix": 20000,
+    "photo": "minaudiere-bijoux-ovale-verte.webp"
+  },
+  {
+    "nom": "Minaudière Strass Rectangle",
+    "description": "Minaudière rigide rectangle strass. Doré, Argent, Noir, Multicolore. 20,000 FCFA.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Groupe",
+    "prix": 20000,
+    "photo": "minaudiere-strass-rectangle-groupe.webp"
+  },
+  {
+    "nom": "Minaudière Perles Nacrées",
+    "description": "Minaudière de cérémonie ornée de perles nacrées blanches et strass, anse métal argenté.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Blanc Nacré",
+    "prix": 25000,
+    "photo": "minaudiere-perles-blanc.webp"
+  },
+  {
+    "nom": "Minaudière Perles Nacrées",
+    "description": "Minaudière de cérémonie ornée de perles noires et strass argentés, anse métal argenté.",
+    "categorie": "pochette",
+    "genre": "femme",
+    "couleur_principale": "Noir",
+    "prix": 25000,
+    "photo": "minaudiere-perles-noir.webp"
+  },
+  {
+    "nom": "Sac Gallantry Shopping Matelassé",
+    "description": "Grand sac shopping Gallantry Paris, cuir matelassé souple, chaîne dorée breloques, double anse.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Marine",
+    "prix": 20000,
+    "photo": "sac-gallantry-shopping-marine.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Baguette Snake",
+    "description": "Sac baguette Tom&Eva, cuir motif serpent, rabat et corps bicolore, fermeture push-lock.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Marron/Caramel",
+    "prix": 30000,
+    "photo": "sac-tomeva-baguette-marron.webp"
+  },
+  {
+    "nom": "Sac Tom&Eva Baguette Snake",
+    "description": "Sac baguette Tom&Eva, cuir motif serpent, rabat et corps bicolore, fermeture push-lock.",
+    "categorie": "sac",
+    "genre": "femme",
+    "couleur_principale": "Bordeaux",
+    "prix": 30000,
+    "photo": "sac-tomeva-baguette-bordeaux.webp"
+  }
+]

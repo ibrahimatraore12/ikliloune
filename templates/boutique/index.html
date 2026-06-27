@@ -105,7 +105,27 @@
   <div class="hero-dots" id="hero-dots" aria-label="Navigation slides"></div>
 </section>
 
+<!-- ══ BANNIÈRE MAGASIN ══════════════════════════════════════ -->
+<div class="banniere-magasin">
+  <div class="bm-photo">
+    <img src="{{ url_for('static', filename='images/boutique/magasin-banner.jpg') }}"
+         alt="Boutique IKLILOUNE" onerror="this.parentElement.style.display='none'">
+  </div>
+  <div class="bm-contenu">
+    <span class="bm-badge">🏪 Notre boutique</span>
+    <h3>IKLILOUNE — La Maison du Chic</h3>
+    <p>📍 Songon 17, non loin de la Pharmacie de la Paix &nbsp;·&nbsp; Abidjan, Côte d'Ivoire</p>
+    <p>⏰ Lun – Sam : 9h – 19h &nbsp;·&nbsp; Dim : 10h – 17h</p>
+    <p>📞 <a href="tel:+2250748956959">+225 07 48 95 69 59</a>
+       &nbsp;·&nbsp;
+       <a href="https://wa.me/2250748956959" target="_blank">💬 WhatsApp</a></p>
+    <a class="btn-itineraire"
+       href="https://www.google.com/maps/search/Songon+17+Abidjan+Pharmacie+de+la+Paix"
+       target="_blank" rel="noopener">🗺️ Itinéraire Google Maps</a>
+  </div>
+</div>
 <!-- ══ BARRE FILTRES ═════════════════════════════════════════ -->
+
 <div class="barre-cats" id="barre-cats">
   <button class="cat-pill active" onclick="filtrerCategorie('tous', this)">🏷️ Tout voir</button>
   <div class="cat-sep"></div>
@@ -208,7 +228,48 @@
     <input class="checkout-input" id="c-email"
            placeholder="Email (facultatif)"
            type="email" autocomplete="email">
-    <input class="checkout-input" id="c-adresse"
+    <!-- ── Mode de récupération ─────────────────────────────── -->
+    <div class="checkout-label">🚗 Récupération de la commande</div>
+    <div class="liv-opts" id="liv-opts">
+      <label class="liv-opt selected" id="liv-collect"
+             onclick="setModeLivraison('click_collect')">
+        <input type="radio" name="livraison" value="click_collect" checked>
+        <span class="liv-icon">🏪</span>
+        <div>
+          <strong>Retrait magasin</strong>
+          <small>Gratuit · Songon 17</small>
+        </div>
+      </label>
+      <label class="liv-opt" id="liv-domicile"
+             onclick="setModeLivraison('livraison')">
+        <input type="radio" name="livraison" value="livraison">
+        <span class="liv-icon">🚚</span>
+        <div>
+          <strong>Livraison</strong>
+          <small>1 500 – 3 500 FCFA</small>
+        </div>
+      </label>
+    </div>
+    <div id="zone-wrap" style="display:none;margin-top:8px">
+      <select id="c-zone" class="checkout-input" onchange="majFraisLivraison()">
+        <option value="zone_1">Zone 1 — Songon / Yopougon · 1 500 FCFA</option>
+        <option value="zone_2">Zone 2 — Abidjan Centre · 2 500 FCFA</option>
+        <option value="zone_3">Zone 3 — Banlieue / Hors Abidjan · 3 500 FCFA</option>
+      </select>
+      <input class="checkout-input" id="c-adresse-liv"
+             placeholder="Adresse précise de livraison *"
+             style="margin-top:8px">
+      <div class="frais-liv-info" id="frais-info">
+        🚚 Frais estimés : <strong id="frais-montant">1 500 FCFA</strong>
+        <br><small>Confirmés dans la notification de validation</small>
+      </div>
+    </div>
+    <!-- Ligne frais dans récap total -->
+    <div class="panier-total" id="frais-ligne" style="display:none">
+      <span>🚚 Livraison</span>
+      <span id="frais-recap">0 FCFA</span>
+    </div>
+        <input class="checkout-input" id="c-adresse"
            placeholder="Commune / Quartier · Ex : Cocody, Yopougon…"
            autocomplete="street-address">
     <input class="checkout-input" id="c-promo"
@@ -320,4 +381,66 @@
 
 {% block scripts_extra %}
 <script src="{{ url_for('static', filename='js/boutique.js') }}"></script>
+<script>
+/* ── Click&Collect / Livraison ─────────────────────────────── */
+const FRAIS_ZONES = { zone_1: 1500, zone_2: 2500, zone_3: 3500 };
+let _modeLiv  = 'click_collect';
+let _zoneLiv  = 'zone_1';
+let _fraisLiv = 0;
+
+function setModeLivraison(mode) {
+  _modeLiv = mode;
+  document.querySelectorAll('.liv-opt').forEach(el => el.classList.remove('selected'));
+  const showZone = mode === 'livraison';
+  document.getElementById('liv-collect').classList.toggle('selected',  !showZone);
+  document.getElementById('liv-domicile').classList.toggle('selected',  showZone);
+  document.getElementById('zone-wrap').style.display   = showZone ? 'block' : 'none';
+  document.getElementById('frais-ligne').style.display = showZone ? 'flex'  : 'none';
+  majFraisLivraison();
+}
+
+function majFraisLivraison() {
+  const zone = document.getElementById('c-zone');
+  if (zone) _zoneLiv = zone.value;
+  _fraisLiv = _modeLiv === 'livraison' ? (FRAIS_ZONES[_zoneLiv] || 0) : 0;
+  const fmt = n => n.toLocaleString('fr-FR') + ' FCFA';
+  const elMontant = document.getElementById('frais-montant');
+  const elRecap   = document.getElementById('frais-recap');
+  if (elMontant) elMontant.textContent = fmt(_fraisLiv);
+  if (elRecap)   elRecap.textContent   = fmt(_fraisLiv);
+  /* Tenter de déclencher le recalcul du total si la fonction existe */
+  ['mettreAJourTotaux','majTotaux','recalculerTotaux','updateTotal'].forEach(fn => {
+    if (typeof window[fn] === 'function') window[fn]();
+  });
+}
+
+/* Intercepte le bouton Valider pour injecter livraison */
+document.addEventListener('DOMContentLoaded', function () {
+  const btn = document.querySelector('.btn-commander');
+  if (!btn) return;
+  btn.removeAttribute('onclick');
+  btn.addEventListener('click', async function (e) {
+    e.preventDefault();
+    /* Validation adresse livraison obligatoire */
+    if (_modeLiv === 'livraison') {
+      const adLiv = (document.getElementById('c-adresse-liv')?.value || '').trim();
+      if (!adLiv) {
+        if (typeof afficherToast === 'function')
+          afficherToast('⚠️ Veuillez saisir votre adresse de livraison.', 'erreur');
+        else alert('Veuillez saisir votre adresse de livraison.');
+        return;
+      }
+    }
+    /* Données livraison accessibles globalement pour boutique.js */
+    window.__livraison = {
+      mode_livraison   : _modeLiv,
+      zone_livraison   : _modeLiv === 'livraison' ? _zoneLiv : null,
+      frais_livraison  : _fraisLiv,
+      adresse_livraison: (document.getElementById('c-adresse-liv')?.value || '').trim(),
+    };
+    if (typeof validerCommande === 'function') await validerCommande();
+  });
+});
+</script>
+
 {% endblock %}

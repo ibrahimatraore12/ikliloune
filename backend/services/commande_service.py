@@ -96,7 +96,27 @@ def formater_message_whatsapp(commande) -> str:
     paiement = LABELS_PAIEMENT.get(mode_pmt.lower(), mode_pmt or "À définir")
 
     # ── Adresse ───────────────────────────────────────────────
-    adresse = (getattr(commande, "client_adresse", "") or "À préciser").strip()
+    # Livraison
+    mode_liv    = getattr(commande, "mode_livraison",    "click_collect") or "click_collect"
+    frais_liv   = getattr(commande, "frais_livraison",   0) or 0
+    zone_liv    = getattr(commande, "zone_livraison",    "") or ""
+    adresse_liv = (getattr(commande, "adresse_livraison", "") or "").strip()
+    adresse_cli = (getattr(commande, "client_adresse",    "") or "").strip()
+    adresse     = adresse_liv or adresse_cli or "À préciser"
+    ZONES_LBL = {
+        "zone_1": "Zone 1 — Songon / Yopougon",
+        "zone_2": "Zone 2 — Abidjan Centre",
+        "zone_3": "Zone 3 — Banlieue / Hors Abidjan",
+    }
+    if mode_liv == "click_collect":
+        ligne_livraison = "🏪 *Retrait magasin* — Songon 17, près Pharmacie de la Paix\n"
+    else:
+        zone_label = ZONES_LBL.get(zone_liv, zone_liv)
+        ligne_livraison = (
+            f"🚚 *Livraison* — {zone_label}\n"
+            f"📍 Adresse : {adresse}\n"
+            f"💸 Frais livraison : {_formater_montant(frais_liv)}\n"
+        )
 
     # ── Composition du message ────────────────────────────────
     message = (
@@ -111,7 +131,7 @@ def formater_message_whatsapp(commande) -> str:
         f"━━━━━━━━━━━━━━━━━━━━━\n"
         f"👤 *Client :* {commande.client_nom}\n"
         f"📞 *Tél :* {commande.client_telephone}\n"
-        f"📍 *Livraison :* {adresse}\n"
+        f"{ligne_livraison}"
         f"💳 *Paiement :* {paiement}\n"
         f"━━━━━━━━━━━━━━━━━━━━━\n\n"
         f"Je souhaite confirmer cette commande. Merci ! 🙏"

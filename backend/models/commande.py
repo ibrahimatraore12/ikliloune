@@ -49,6 +49,15 @@ class Commande(db.Model):
     remise_montant  = db.Column(db.Integer, nullable=False, default=0)
     total           = db.Column(db.Integer, nullable=False, default=0)
     code_promo_utilise = db.Column(db.String(30), nullable=True)
+    # --- Mode de livraison ------------------------------------
+    # "click_collect" | "livraison"
+    mode_livraison    = db.Column(db.String(20), nullable=False, default="click_collect")
+    # "zone_1" | "zone_2" | "zone_3"
+    zone_livraison    = db.Column(db.String(20), nullable=True)
+    # Frais en FCFA (0 si retrait magasin)
+    frais_livraison   = db.Column(db.Integer, nullable=False, default=0)
+    # Adresse de livraison précise
+    adresse_livraison = db.Column(db.String(300), nullable=True)
 
     # --- Canal et paiement -------------------------------------
     # "site_web" | "whatsapp"
@@ -123,6 +132,10 @@ class Commande(db.Model):
             "total"              : self.total,
             "code_promo_utilise" : self.code_promo_utilise or "",
             "canal"              : self.canal,
+            "mode_livraison"     : self.mode_livraison or "click_collect",
+            "zone_livraison"     : self.zone_livraison or "",
+            "frais_livraison"    : self.frais_livraison or 0,
+            "adresse_livraison"  : self.adresse_livraison or "",
             "mode_paiement"      : self.mode_paiement or "",
             "statut"             : self.statut,
             "libelle_statut"     : self.libelle_statut(),
