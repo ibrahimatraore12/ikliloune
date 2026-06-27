@@ -1186,3 +1186,148 @@ def api_historique_stock_produit(pid):
         "produit"    : produit.vers_dict_admin(),
         "mouvements" : [m.vers_dict() for m in mouvements],
     })
+
+
+# ══════════════════════════════════════════════════════════════
+# CAISSE MAGASIN — Ventes en boutique physique
+# ══════════════════════════════════════════════════════════════
+
+@admin_bp.route("/admin/api/commande-magasin", methods=["POST"])
+@login_required
+def creer_commande_magasin():
+    """
+    Crée une vente en boutique physique (canal = "magasin").
+    La commande est directement confirmée et le stock est décrémenté.
+
+    Corps JSON :
+    {
+      "client_nom":    "Fatou Koné",
+      "client_tel":    "+2250700000000",
+      "articles":      [{"produit_id": 5, "quantite": 2}, ...],
+      "mode_paiement": "orange_money"   ← optionnel
+    }
+    """
+    from backend.models.historique_stock import HistoriqueStock
+
+    data = request.get_json() or {}
+
+    client_nom = data.get("client_nom", "").strip()
+    client_tel = data.get("client_tel", "").strip()
+    articles_in = data.get("articles", [])
+
+    if not client_nom or not client_tel:
+        return jsonify({"erreur": "Nom et téléphone client obligatoires"}), 400
+    if not articles_in:
+        return jsonify({"erreur": "Aucun article sélectionné"}), 400
+
+    try:
+        import json as _json
+
+        # ── Constituer le panier ─────────────────────────────
+        articles_json_list = []
+        sous_total = 0
+
+        for item in articles_in:
+            pid_  = item.get("produit_id")
+            qty_  = int(item.get("quantite", item.get("qty", 1)))
+            if not pid_ or qty_ <= 0:
+                continue
+            prod_ = db.session.get(Produit, pid_)
+            if not prod_ or not prod_.actif:
+                return jsonify({"erreur": f"Produit ID {pid_} introuvable ou inactif"}), 400
+            if prod_.stock < qty_:
+                return jsonify({
+                    "erreur": f"Stock insuffisant pour '{prod_.nom}' "
+                              f"(disponible : {prod_.stock}, demandé : {qty_})"
+                }), 400
+
+            prix_u = prod_.prix_actuel()
+            articles_json_list.append({
+                "id"          : prod_.id,
+                "reference"   : prod_.reference,
+                "nom"         : prod_.nom,
+                "prix_actuel" : prix_u,
+                "prix_unitaire": prix_u,
+                "quantite"    : qty_,
+                "qty"         : qty_,
+                "photo"       : prod_.photo or "",
+                "categorie"   : prod_.categorie,
+            })
+            sous_total += prix_u * qty_
+
+        if not articles_json_list:
+            return jsonify({"erreur": "Aucun article valide"}), 400
+
+        # ── Créer la commande magasin ─────────────────────────
+        commande = Commande(
+            client_nom       = client_nom,
+            client_telephone = client_tel,
+            articles_json    = _json.dumps(articles_json_list, ensure_ascii=False),
+            sous_total       = sous_total,
+            remise_montant   = 0,
+            total            = sous_total,
+            canal            = "magasin",
+            mode_livraison   = "click_collect",
+            frais_livraison  = 0,
+            statut           = "confirmee",
+            mode_paiement    = data.get("mode_paiement", "a_definir"),
+            notes_admin      = f"Vente en boutique — saisie par {current_user.email}",
+        )
+        db.session.add(commande)
+        db.session.flush()  # obtenir l'ID avant le log
+
+        # ── Décrémenter le stock ──────────────────────────────
+        for item in articles_json_list:
+            prod_ = db.session.get(Produit, item["id"])
+            if prod_:
+                avant_ = prod_.stock
+                prod_.stock = max(0, prod_.stock - item["qty"])
+                db.session.add(HistoriqueStock(
+                    produit_id=prod_.id,
+                    type_mouvement="vente_magasin",
+                    quantite_avant=avant_,
+                    quantite_apres=prod_.stock,
+                    delta=prod_.stock - avant_,
+                    commande_id=commande.id,
+                    note=f"Vente boutique — {commande.numero}"
+                ))
+
+        # ── Historique statut ─────────────────────────────────
+        db.session.add(HistoriqueStatut(
+            commande_id  = commande.id,
+            statut_avant = None,
+            statut_apres = "confirmee",
+            note         = "Vente créée et confirmée en boutique",
+            modifie_par  = current_user.email,
+        ))
+
+        db.session.commit()
+
+        # ── Générer le ticket WhatsApp acheteur ───────────────
+        from backend.services.commande_service import generer_ticket_acheteur
+        ticket = generer_ticket_acheteur(commande)
+
+        print(f"🛍️ Vente magasin : {commande.numero} — {client_nom} — {sous_total} FCFA")
+        return jsonify({
+            "succes"    : True,
+            "commande"  : commande.vers_dict(),
+            "ticket_wa" : ticket,
+        }), 201
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"❌ Erreur creer_commande_magasin : {e}")
+        return jsonify({"erreur": str(e)}), 500
+
+
+@admin_bp.route("/admin/api/ticket-wa/<int:cid>")
+@login_required
+def api_ticket_whatsapp_acheteur(cid):
+    """
+    Génère le ticket WhatsApp acheteur pour n'importe quelle commande.
+    Utilisé par le bouton 'Envoyer ticket acheteur' dans le modal commande.
+    """
+    from backend.services.commande_service import generer_ticket_acheteur
+    commande = db.get_or_404(Commande, cid)
+    ticket   = generer_ticket_acheteur(commande)
+    return jsonify({"succes": True, **ticket})

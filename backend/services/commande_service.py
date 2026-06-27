@@ -199,3 +199,98 @@ def message_notification_statut(commande) -> dict:
         "url"     : url,
         "message" : message[:120] + "…" if len(message) > 120 else message
     }
+
+
+def generer_ticket_acheteur(commande) -> dict:
+    """
+    Génère un ticket/reçu formaté pour l'ACHETEUR via WhatsApp.
+    Distinct de message_notification_statut() qui s'adresse au client
+    pour un changement de statut.
+
+    Ce ticket est envoyé :
+    - À la confirmation d'une commande en ligne
+    - Immédiatement après une vente en magasin (canal="magasin")
+
+    Returns:
+        dict: { "url": "https://wa.me/...", "texte": "..." }
+    """
+    # ── Articles ──────────────────────────────────────────────
+    lignes = ""
+    for a in commande.articles():
+        nom    = a.get("nom", "Article")
+        qty    = int(a.get("qty", a.get("quantite", a.get("qte", 1))))
+        prix_u = a.get("prix_actuel", a.get("prix_unitaire", a.get("prix", 0)))
+        coloris = a.get("coloris", a.get("couleur", ""))
+        taille  = a.get("taille", a.get("pointure", ""))
+        detail  = ""
+        if coloris: detail += f" · {coloris}"
+        if taille:  detail += f" · {taille}"
+        lignes += f"  • {nom}{detail} ×{qty} = {_formater_montant(qty * prix_u)}\n"
+
+    if not lignes:
+        lignes = "  • Articles commandés\n"
+
+    # ── Remise ────────────────────────────────────────────────
+    ligne_remise = ""
+    remise = getattr(commande, "remise_montant", 0) or 0
+    if remise > 0:
+        code = getattr(commande, "code_promo_utilise", "") or ""
+        suffix = f" ({code})" if code else ""
+        ligne_remise = f"🎁 Remise{suffix} : -{_formater_montant(remise)}\n"
+
+    # ── Livraison ─────────────────────────────────────────────
+    mode_liv  = getattr(commande, "mode_livraison", "click_collect") or "click_collect"
+    frais_liv = getattr(commande, "frais_livraison", 0) or 0
+    canal     = getattr(commande, "canal", "site_web") or "site_web"
+
+    if canal == "magasin":
+        ligne_liv = "🏪 Achat en boutique — IKLILOUNE Songon 17\n"
+    elif mode_liv == "click_collect":
+        ligne_liv = "🏪 Retrait magasin — Songon 17, près Pharmacie de la Paix\n"
+    else:
+        ZONES_LBL = {
+            "zone_1": "Zone 1 — Songon / Yopougon",
+            "zone_2": "Zone 2 — Abidjan Centre",
+            "zone_3": "Zone 3 — Banlieue / Hors Abidjan",
+        }
+        zone_label = ZONES_LBL.get(getattr(commande, "zone_livraison", ""), "")
+        ligne_liv  = (
+            f"🚚 Livraison {zone_label}\n"
+            f"   Frais : {_formater_montant(frais_liv)}\n"
+        )
+
+    # ── Message complet ───────────────────────────────────────
+    date_str = commande.cree_le.strftime("%d/%m/%Y à %H:%M") if commande.cree_le else "—"
+    mode_pmt = getattr(commande, "mode_paiement", "") or ""
+    paiement = LABELS_PAIEMENT.get(mode_pmt.lower(), mode_pmt or "—")
+
+    texte = (
+        f"🧾 *IKLILOUNE — TICKET D'ACHAT*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📋 Commande : *{commande.numero}*\n"
+        f"📅 Date : {date_str}\n"
+        f"👤 Client : {commande.client_nom}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"🛍️ *Articles :*\n"
+        f"{lignes}\n"
+        f"💰 Sous-total : {_formater_montant(commande.sous_total or commande.total)}\n"
+        f"{ligne_remise}"
+    )
+    if frais_liv > 0:
+        texte += f"🚚 Livraison : {_formater_montant(frais_liv)}\n"
+
+    texte += (
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"💳 *TOTAL PAYÉ : {_formater_montant(commande.total)} FCFA*\n"
+        f"   Paiement : {paiement}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━━━━\n\n"
+        f"{ligne_liv}\n"
+        f"🌸 *IKLILOUNE — La Maison du Chic*\n"
+        f"📍 Songon 17, près Pharmacie de la Paix\n"
+        f"📞 +225 07 48 95 69 59\n\n"
+        f"Merci de votre confiance ! 🙏"
+    )
+
+    tel = _normaliser_telephone(commande.client_telephone)
+    url = f"https://wa.me/{tel}?text={quote(texte)}"
+    return {"url": url, "texte": texte}

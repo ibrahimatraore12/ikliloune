@@ -1241,7 +1241,8 @@ document.addEventListener("DOMContentLoaded", () => {
   chargerTableProduits();
 
   // Fermer les modals en cliquant sur le fond sombre
-  ["modal-bg", "modal-commande-bg", "modal-banniere-bg", "modal-client-bg"].forEach(id => {
+  ["modal-bg", "modal-commande-bg", "modal-banniere-bg", "modal-client-bg",
+   "modal-magasin-bg"].forEach(id => {
     const modal = document.getElementById(id);
     if (modal) {
       modal.addEventListener("click", function(e) {
@@ -1263,6 +1264,294 @@ document.addEventListener("DOMContentLoaded", () => {
       fermerModalCommande();
       fermerModalBanniere();
       fermerModalClient();
+      fermerModalMagasin();
     }
   });
 });
+
+
+// ══════════════════════════════════════════════════════════════
+// CAISSE MAGASIN — Ventes en boutique
+// ══════════════════════════════════════════════════════════════
+
+const MAGASIN = { lignes: [], produits: [] };
+
+/** Formate un montant entier en "28 500 FCFA". */
+function fmtFCFA(n) {
+  return new Intl.NumberFormat("fr-CI").format(n || 0) + " FCFA";
+}
+
+/** Charge la liste des produits actifs pour le select du modal magasin. */
+async function _chargerProduitsMagasin() {
+  if (MAGASIN.produits.length) return;
+  try {
+    const rep  = await fetch("/admin/api/produits");
+    MAGASIN.produits = (await rep.json()).filter(p => p.actif && p.stock > 0);
+    const sel = document.getElementById("mag-produit-select");
+    if (!sel) return;
+    sel.innerHTML = '<option value="">-- Sélectionner un article --</option>';
+    MAGASIN.produits.forEach(p => {
+      sel.innerHTML += `<option value="${p.id}" data-prix="${p.prix_actuel}" data-stock="${p.stock}">
+        ${p.nom} — ${fmtFCFA(p.prix_actuel)} (stock: ${p.stock})
+      </option>`;
+    });
+  } catch (e) { console.error("_chargerProduitsMagasin:", e); }
+}
+
+/** Ajoute une ligne article dans le panier magasin. */
+function ajouterLigneMagasin() {
+  const sel  = document.getElementById("mag-produit-select");
+  const pid  = parseInt(sel?.value);
+  const qty  = parseInt(document.getElementById("mag-qty")?.value || "1");
+  if (!pid || qty < 1) { afficherToast("⚠️ Sélectionnez un article et une quantité valide", "⚠️"); return; }
+
+  const opt   = sel.options[sel.selectedIndex];
+  const prix  = parseFloat(opt.dataset.prix || "0");
+  const stock = parseInt(opt.dataset.stock || "0");
+  const nom   = opt.text.split(" — ")[0].trim();
+
+  const existant = MAGASIN.lignes.find(l => l.id === pid);
+  if (existant) {
+    if (existant.qty + qty > stock) {
+      afficherToast(`⚠️ Stock insuffisant (${stock} disponible)`, "⚠️"); return;
+    }
+    existant.qty += qty;
+  } else {
+    if (qty > stock) { afficherToast(`⚠️ Stock insuffisant (${stock} disponible)`, "⚠️"); return; }
+    MAGASIN.lignes.push({ id: pid, nom, prix, qty, stock });
+  }
+
+  // Réinitialiser la sélection
+  sel.value = "";
+  document.getElementById("mag-qty").value = "1";
+  _rendreLignesMagasin();
+}
+
+/** Retire une ligne du panier magasin. */
+function retirerLigneMagasin(index) {
+  MAGASIN.lignes.splice(index, 1);
+  _rendreLignesMagasin();
+}
+
+/** Met à jour l'affichage des lignes et du total. */
+function _rendreLignesMagasin() {
+  const conteneur = document.getElementById("mag-lignes");
+  if (!conteneur) return;
+  if (!MAGASIN.lignes.length) {
+    conteneur.innerHTML = '<p style="color:#aaa;font-size:12px;text-align:center;margin:12px 0">Aucun article ajouté</p>';
+    document.getElementById("mag-total-aff").textContent = "0 FCFA";
+    return;
+  }
+  let total = 0;
+  conteneur.innerHTML = MAGASIN.lignes.map((l, i) => {
+    const st = l.qty * l.prix;
+    total += st;
+    return `
+      <div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid #f0f0f0">
+        <div style="flex:1;font-weight:600;font-size:13px">${l.nom}</div>
+        <div style="font-size:12px;color:var(--brun-clair)">${fmtFCFA(l.prix)} × ${l.qty}</div>
+        <div style="font-weight:700;color:var(--or-sombre)">${fmtFCFA(st)}</div>
+        <button class="btn-mini btn-danger" onclick="retirerLigneMagasin(${i})">✕</button>
+      </div>`;
+  }).join("");
+  document.getElementById("mag-total-aff").textContent = fmtFCFA(total);
+}
+
+/** Ouvre le modal de vente en magasin. */
+async function ouvrirModalMagasin() {
+  MAGASIN.lignes = [];
+  _rendreLignesMagasin();
+  ["mag-client-nom", "mag-client-tel"].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = "";
+  });
+  await _chargerProduitsMagasin();
+  document.getElementById("modal-magasin-bg").classList.add("show");
+}
+
+function fermerModalMagasin() {
+  document.getElementById("modal-magasin-bg").classList.remove("show");
+  MAGASIN.lignes = [];
+}
+
+/** Valide la vente en magasin et crée la commande. */
+async function validerVenteMagasin() {
+  const nom = document.getElementById("mag-client-nom")?.value.trim();
+  const telRaw = document.getElementById("mag-client-tel")?.value.trim() || "";
+  const chiffres = telRaw.replace(/\D/g, "");
+  const tel = chiffres ? "+225" + chiffres : "";
+
+  if (!nom || !tel) { afficherToast("⚠️ Nom et téléphone obligatoires", "⚠️"); return; }
+  if (!MAGASIN.lignes.length) { afficherToast("⚠️ Aucun article dans le panier", "⚠️"); return; }
+
+  const btn = document.getElementById("btn-vente-magasin");
+  if (btn) { btn.disabled = true; btn.textContent = "Enregistrement..."; }
+
+  try {
+    const rep = await fetch("/admin/api/commande-magasin", {
+      method  : "POST",
+      headers : { "Content-Type": "application/json" },
+      body    : JSON.stringify({
+        client_nom   : nom,
+        client_tel   : tel,
+        mode_paiement: document.getElementById("mag-paiement")?.value || "especes",
+        articles     : MAGASIN.lignes.map(l => ({
+          produit_id: l.id,
+          quantite  : l.qty,
+        })),
+      })
+    });
+    const data = await rep.json();
+
+    if (data.succes) {
+      fermerModalMagasin();
+      chargerVentesMagasin();
+      chargerTableProduits();  // rafraîchir les stocks
+
+      afficherToast(`✅ Vente ${data.commande.numero} enregistrée !`);
+
+      // Ouvrir directement le ticket WA pour l'envoyer
+      if (data.ticket_wa?.url) {
+        if (confirm(`Vente enregistrée !\n\nEnvoyer le ticket WhatsApp à ${nom} ?`)) {
+          window.open(data.ticket_wa.url, "_blank");
+        }
+      }
+    } else {
+      afficherToast("❌ " + (data.erreur || "Erreur"), "❌");
+    }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+    console.error("validerVenteMagasin:", e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = "✅ Enregistrer la vente"; }
+  }
+}
+
+/** Charge les ventes magasin dans la section sec-magasin. */
+async function chargerVentesMagasin() {
+  const tbody = document.getElementById("tbody-magasin");
+  if (!tbody) return;
+  try {
+    const rep  = await fetch("/admin/api/commandes");
+    const data = (await rep.json()).filter(c => c.canal === "magasin");
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:32px;color:var(--brun-clair)">
+        Aucune vente en boutique enregistrée.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => {
+      const arts = (c.articles || []);
+      const resumeArt = arts.slice(0,2).map(a => `${a.nom} ×${a.quantite||a.qty||1}`).join(", ")
+                        + (arts.length > 2 ? ` +${arts.length-2}` : "");
+      return `
+        <tr>
+          <td style="font-weight:700;font-family:monospace;color:var(--or-sombre)">${c.numero}</td>
+          <td style="font-size:11px">${c.cree_le || "—"}</td>
+          <td style="font-weight:600">${c.client_nom}</td>
+          <td><a href="https://wa.me/${(c.client_telephone||"").replace(/[^0-9]/g,"")}"
+                 target="_blank" class="lien-tel">${c.client_telephone}</a></td>
+          <td style="font-size:11px;color:var(--brun-clair)">${resumeArt}</td>
+          <td style="font-weight:700">${fmtFCFA(c.total)}</td>
+          <td>
+            <button class="btn-mini" style="background:#25D366;color:#fff"
+                    onclick="envoyerTicketWA(${c.id})">🧾 Ticket WA</button>
+          </td>
+        </tr>`;
+    }).join("");
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--rouge);padding:24px;text-align:center">
+      ❌ Erreur</td></tr>`;
+  }
+}
+
+/** Envoie le ticket WhatsApp acheteur pour une commande donnée. */
+async function envoyerTicketWA(commandeId) {
+  if (!commandeId) return;
+  try {
+    const rep  = await fetch(`/admin/api/ticket-wa/${commandeId}`);
+    const data = await rep.json();
+    if (data.url) {
+      window.open(data.url, "_blank");
+    } else {
+      afficherToast("❌ Impossible de générer le ticket", "❌");
+    }
+  } catch (e) {
+    afficherToast("❌ Erreur réseau", "❌");
+    console.error("envoyerTicketWA:", e);
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// AUDIT STOCK — Historique des mouvements
+// ══════════════════════════════════════════════════════════════
+
+const ICONES_MOUVEMENT = {
+  vente               : "🛒",
+  vente_magasin       : "🏪",
+  annulation_commande : "↩️",
+  ajustement_manuel   : "✏️",
+  ajout_initial       : "➕",
+  desactivation       : "🗑️",
+  reactivation        : "♻️",
+  correction          : "🔧",
+};
+
+let _filtreAuditType = "";
+
+/** Charge l'historique de stock avec le filtre actif. */
+async function chargerAuditStock(type) {
+  if (type !== undefined) _filtreAuditType = type;
+  const tbody = document.getElementById("tbody-audit");
+  if (!tbody) return;
+
+  const url = _filtreAuditType
+    ? `/admin/api/historique-stock?type=${_filtreAuditType}&limite=300`
+    : "/admin/api/historique-stock?limite=300";
+
+  try {
+    const rep  = await fetch(url);
+    const data = await rep.json();
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--brun-clair)">
+        Aucun mouvement enregistré${_filtreAuditType ? " pour ce filtre" : ""}.
+      </td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(m => {
+      const icone  = ICONES_MOUVEMENT[m.type] || "📦";
+      const deltaC = m.delta >= 0
+        ? `<span style="color:var(--vert);font-weight:700">+${m.delta}</span>`
+        : `<span style="color:var(--rouge);font-weight:700">${m.delta}</span>`;
+      return `
+        <tr>
+          <td style="font-size:11px;white-space:nowrap">${m.date}</td>
+          <td><span class="badge-statut s-info" style="font-size:10px">${icone} ${m.type}</span></td>
+          <td style="font-weight:600;font-size:12px">${m.produit_nom}</td>
+          <td style="font-family:monospace;font-size:10px;color:var(--brun-clair)">${m.produit_ref}</td>
+          <td style="text-align:center">${m.avant}</td>
+          <td style="text-align:center;font-weight:700">${m.apres}</td>
+          <td style="text-align:center">${deltaC}</td>
+          <td style="font-size:10px;color:var(--brun-clair)">
+            ${m.commande_num ? `<a href="#" onclick="event.preventDefault();ouvrirModalCommande(${m.commande_id})" style="color:var(--or-sombre)">${m.commande_num}</a>` : "—"}
+          </td>
+          <td style="font-size:11px;color:var(--brun-clair)">${m.note}</td>
+        </tr>`;
+    }).join("");
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="9" style="color:var(--rouge);padding:24px;text-align:center">
+      ❌ Erreur de chargement</td></tr>`;
+    console.error("chargerAuditStock:", e);
+  }
+}
+
+/** Filtre l'audit stock par type de mouvement. */
+function filtrerAuditStock(type, btn) {
+  document.querySelectorAll("#sec-stock-audit .filtre-btn").forEach(b => b.classList.remove("active"));
+  if (btn) btn.classList.add("active");
+  chargerAuditStock(type);
+}

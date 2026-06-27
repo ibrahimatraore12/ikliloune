@@ -25,6 +25,8 @@
       <button class="sbar-item" onclick="adminSection('clients', this)">👥 Clients</button>
       <button class="sbar-item" onclick="adminSection('promos', this)">🎟️ Codes Promo</button>
       <button class="sbar-item" onclick="adminSection('stats', this)">📈 Statistiques</button>
+      <button class="sbar-item" onclick="adminSection('magasin', this)">🛍️ Caisse Magasin</button>
+      <button class="sbar-item" onclick="adminSection('stock-audit', this)">📋 Audit Stock</button>
       <div class="sidebar-sep"></div>
       <a class="sbar-item" href="/" target="_blank">🏪 Voir la boutique →</a>
       <a class="sbar-item deconnexion" href="{{ url_for('auth.deconnexion') }}">🚪 Déconnexion</a>
@@ -265,6 +267,8 @@
           <p class="admin-page-sous">Cliquez sur une commande pour la détailler et changer son statut</p>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn-primaire" onclick="ouvrirModalMagasin()"
+                  style="background:#7b2d8b">🛍️ Nouvelle vente</button>
           <a class="btn-primaire" href="/admin/api/export/commandes-excel"
              style="background:var(--vert-dark,#1a7a4a)">📥 Export Excel</a>
         </div>
@@ -488,6 +492,75 @@
           {% else %}
           <p class="graph-vide">Aucune vente enregistrée.</p>
           {% endif %}
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION CAISSE MAGASIN — Ventes en boutique
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-magasin" class="admin-section">
+      <div class="admin-top">
+        <div>
+          <h1 class="admin-page-titre">🛍️ Caisse Magasin</h1>
+          <p class="admin-page-sous">Enregistrer une vente en boutique · Stock mis à jour automatiquement</p>
+        </div>
+        <button class="btn-primaire" onclick="ouvrirModalMagasin()">+ Nouvelle vente</button>
+      </div>
+
+      <!-- Dernières ventes magasin -->
+      <div class="admin-table-wrap">
+        <div class="admin-table-header"><h3>🏪 Dernières ventes en boutique</h3></div>
+        <div class="table-scroll">
+          <table class="admin-table">
+            <thead><tr>
+              <th>Numéro</th><th>Date</th><th>Client</th><th>Téléphone</th>
+              <th>Articles</th><th>Total</th><th>Ticket</th>
+            </tr></thead>
+            <tbody id="tbody-magasin">
+              <tr><td colspan="7" class="chargement-cell">Chargement...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ─────────────────────────────────────────────────────
+         SECTION AUDIT STOCK — Historique des mouvements
+    ───────────────────────────────────────────────────────── -->
+    <section id="sec-stock-audit" class="admin-section">
+      <div class="admin-top">
+        <div>
+          <h1 class="admin-page-titre">📋 Audit Stock</h1>
+          <p class="admin-page-sous">Traçabilité complète · Chaque mouvement est enregistré</p>
+        </div>
+      </div>
+
+      <!-- Filtres -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+        <button class="filtre-btn active" onclick="filtrerAuditStock('',this)">Tous</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('vente',this)">🛒 Ventes</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('vente_magasin',this)">🏪 Magasin</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('ajustement_manuel',this)">✏️ Ajustements</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('annulation_commande',this)">↩️ Annulations</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('ajout_initial',this)">➕ Ajouts</button>
+        <button class="filtre-btn" onclick="filtrerAuditStock('desactivation',this)">🗑️ Désactivations</button>
+      </div>
+
+      <div class="admin-table-wrap">
+        <div class="table-scroll">
+          <table class="admin-table" id="table-audit">
+            <thead><tr>
+              <th>Date</th><th>Type</th><th>Produit</th><th>Réf.</th>
+              <th>Avant</th><th>Après</th><th>Delta</th>
+              <th>Commande</th><th>Note</th>
+            </tr></thead>
+            <tbody id="tbody-audit">
+              <tr><td colspan="9" class="chargement-cell">Chargement de l'audit...</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </section>
@@ -825,6 +898,13 @@
       </div>
     </div>
 
+    <!-- Ticket WhatsApp acheteur -->
+    <div style="padding:10px 20px 16px">
+      <button class="btn-primaire" onclick="envoyerTicketWA(ADMIN.commandeId)"
+              style="background:#25D366;width:100%">
+        🧾 Envoyer le ticket d'achat WhatsApp à l'acheteur
+      </button>
+    </div>
     <div class="modal-footer">
       <button class="btn-annuler" onclick="fermerModalCommande()">Fermer</button>
     </div>
@@ -971,6 +1051,80 @@
   </div>
 </div>
 
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MODAL — Vente en magasin (Caisse boutique)
+══════════════════════════════════════════════════════════════ -->
+<div class="modal-bg" id="modal-magasin-bg">
+  <div class="modal-box" style="max-width:600px">
+    <div class="modal-header">
+      <h2>🛍️ Nouvelle vente en boutique</h2>
+      <button onclick="fermerModalMagasin()" aria-label="Fermer">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Client -->
+      <div class="field-row">
+        <div class="field-group">
+          <label class="field-lbl">Nom du client *</label>
+          <input class="field-input" id="mag-client-nom" placeholder="Fatou Koné">
+        </div>
+        <div class="field-group">
+          <label class="field-lbl">Téléphone * (pour le ticket)</label>
+          <div class="tel-wrap-admin">
+            <span class="tel-prefix-admin">🇨🇮 +225</span>
+            <input class="field-input tel-input-admin" id="mag-client-tel"
+                   placeholder="07 00 00 00 00" type="tel" maxlength="10" inputmode="numeric"
+                   oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Paiement -->
+      <div class="field-group">
+        <label class="field-lbl">Mode de paiement</label>
+        <select class="field-input" id="mag-paiement">
+          <option value="especes">💵 Espèces</option>
+          <option value="orange_money">🟠 Orange Money</option>
+          <option value="mtn_momo">🟡 MTN MoMo</option>
+          <option value="wave">🔵 Wave</option>
+        </select>
+      </div>
+
+      <!-- Articles -->
+      <div class="field-group">
+        <label class="field-lbl">Articles vendus *</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <select class="field-input" id="mag-produit-select" style="flex:3">
+            <option value="">-- Sélectionner un article --</option>
+          </select>
+          <input class="field-input" type="number" id="mag-qty" value="1" min="1"
+                 style="flex:1;max-width:80px" placeholder="Qté">
+          <button class="btn-primaire" onclick="ajouterLigneMagasin()"
+                  style="white-space:nowrap">+ Ajouter</button>
+        </div>
+        <div id="mag-lignes" style="border:1px solid #eee;border-radius:8px;min-height:60px;padding:8px">
+          <p style="color:#aaa;font-size:12px;text-align:center;margin:12px 0">
+            Aucun article ajouté
+          </p>
+        </div>
+      </div>
+
+      <!-- Total -->
+      <div style="text-align:right;margin-top:12px;padding:12px;background:var(--ivoire);border-radius:8px">
+        <strong style="font-size:18px">Total : <span id="mag-total-aff">0 FCFA</span></strong>
+      </div>
+
+    </div>
+    <div class="modal-footer">
+      <button class="btn-annuler" onclick="fermerModalMagasin()">Annuler</button>
+      <button class="btn-primaire" onclick="validerVenteMagasin()" id="btn-vente-magasin">
+        ✅ Enregistrer la vente
+      </button>
+    </div>
+  </div>
+</div>
 
 <!-- ══════════════════════════════════════════════════════════
      TOAST — Notifications flottantes
