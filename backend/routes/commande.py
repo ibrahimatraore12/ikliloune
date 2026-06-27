@@ -95,6 +95,24 @@ def passer_commande():
         frais_livraison = ZONES[zone_livraison]["frais"]
     adresse_livraison = (data.get("adresse_livraison") or "").strip()
 
+    # ── 2b. Mode de livraison ─────────────────────────────────
+    ZONES = {
+        "zone_1": {"label": "Songon / Yopougon",       "frais": 1500},
+        "zone_2": {"label": "Abidjan Centre",           "frais": 2500},
+        "zone_3": {"label": "Banlieue / Hors Abidjan", "frais": 3500},
+    }
+    mode_livraison = data.get("mode_livraison", "click_collect")
+    if mode_livraison not in ("click_collect", "livraison"):
+        mode_livraison = "click_collect"
+    zone_livraison  = None
+    frais_livraison = 0
+    if mode_livraison == "livraison":
+        zone_livraison = data.get("zone_livraison", "zone_1")
+        if zone_livraison not in ZONES:
+            zone_livraison = "zone_1"
+        frais_livraison = ZONES[zone_livraison]["frais"]
+    adresse_livraison = (data.get("adresse_livraison") or "").strip()
+
     # ── 3. Conversion sécurisée des montants ──────────────────
     try:
         sous_total      = nettoyer_int(data.get("sous_total") or data.get("total"), 0, "sous-total")
@@ -102,6 +120,9 @@ def passer_commande():
         total           = nettoyer_int(data.get("total"),     0, "total")
     except ValueError as e:
         return jsonify({"erreur": str(e)}), 400
+
+    # Ajouter frais de livraison au total
+    total = total + frais_livraison
 
     # Ajouter frais de livraison au total
     total = total + frais_livraison
@@ -131,6 +152,10 @@ def passer_commande():
             total            = total,
             mode_paiement    = data.get("paiement", "") or data.get("mode_paiement", ""),
             canal            = data.get("canal", "site_web"),
+            mode_livraison   = mode_livraison,
+            zone_livraison   = zone_livraison,
+            frais_livraison  = frais_livraison,
+            adresse_livraison= adresse_livraison,
             mode_livraison   = mode_livraison,
             zone_livraison   = zone_livraison,
             frais_livraison  = frais_livraison,
