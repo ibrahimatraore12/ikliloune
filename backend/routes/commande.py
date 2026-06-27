@@ -156,10 +156,6 @@ def passer_commande():
             zone_livraison   = zone_livraison,
             frais_livraison  = frais_livraison,
             adresse_livraison= adresse_livraison,
-            mode_livraison   = mode_livraison,
-            zone_livraison   = zone_livraison,
-            frais_livraison  = frais_livraison,
-            adresse_livraison= adresse_livraison,
             statut           = "recue"
         )
         db.session.add(commande)
