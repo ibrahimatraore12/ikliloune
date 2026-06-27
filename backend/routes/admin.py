@@ -29,6 +29,7 @@ from backend.services.stats_service  import (
     top_produits_consultes,
 )
 from backend.services.commande_service import message_notification_statut
+from backend.models.historique_stock   import HistoriqueStock
 from backend import config
 
 admin_bp = Blueprint("admin", __name__)
@@ -129,6 +130,17 @@ def ajouter_produit():
             seuil_haut     = int(request.form.get("seuil_haut", config.SEUIL_STOCK_HAUT)),
         )
         db.session.add(produit)
+        db.session.flush()  # flush pour obtenir l'ID (dans la transaction courante)
+        # ── Log stock initial ────────────────────────────────────
+        if produit.stock > 0:
+            db.session.add(HistoriqueStock(
+                produit_id=produit.id,
+                type_mouvement="ajout_initial",
+                quantite_avant=0,
+                quantite_apres=produit.stock,
+                delta=produit.stock,
+                note=f"Création produit : {produit.nom}"
+            ))
         db.session.commit()  # commit pour obtenir l'ID avant de nommer la photo
 
         # ── Traitement de la photo (optionnel) ──────────────────
@@ -170,6 +182,7 @@ def modifier_produit(pid):
     """
     produit = db.get_or_404(Produit, pid)
     try:
+        stock_avant = produit.stock  # mémoriser avant toute modification
         produit.nom            = request.form.get("nom",       produit.nom).strip()
         produit.categorie      = request.form.get("categorie", produit.categorie)
         produit.genre          = request.form.get("genre",     produit.genre)
@@ -205,6 +218,18 @@ def modifier_produit(pid):
             if nom_webp:
                 produit.photo = nom_webp
 
+        # ── Log si le stock a été modifié manuellement ───────────
+        if produit.stock != stock_avant:
+            note_adj = (request.form.get("note_stock", "").strip()
+                        or f"Ajustement manuel : {stock_avant} → {produit.stock}")
+            db.session.add(HistoriqueStock(
+                produit_id=produit.id,
+                type_mouvement="ajustement_manuel",
+                quantite_avant=stock_avant,
+                quantite_apres=produit.stock,
+                delta=produit.stock - stock_avant,
+                note=note_adj
+            ))
         db.session.commit()
         print(f"✅ Produit modifié : [{produit.reference}] {produit.nom}")
         return jsonify({"succes": True, "produit": produit.vers_dict_admin()})
@@ -223,7 +248,16 @@ def supprimer_produit(pid):
     Le produit reste en base pour la cohérence des commandes passées.
     """
     produit = db.get_or_404(Produit, pid)
+    stock_courant = produit.stock
     produit.actif = False
+    db.session.add(HistoriqueStock(
+        produit_id=produit.id,
+        type_mouvement="desactivation",
+        quantite_avant=stock_courant,
+        quantite_apres=stock_courant,
+        delta=0,
+        note="Produit désactivé — retiré du catalogue"
+    ))
     db.session.commit()
     print(f"🗑️ Produit désactivé : [{produit.reference}] {produit.nom}")
     return jsonify({"succes": True, "message": f"'{produit.nom}' retiré du catalogue"})
@@ -235,6 +269,14 @@ def reactiver_produit(pid):
     """Réactive un article précédemment désactivé."""
     produit = db.get_or_404(Produit, pid)
     produit.actif = True
+    db.session.add(HistoriqueStock(
+        produit_id=produit.id,
+        type_mouvement="reactivation",
+        quantite_avant=produit.stock,
+        quantite_apres=produit.stock,
+        delta=0,
+        note="Produit réactivé — remis en ligne"
+    ))
     db.session.commit()
     return jsonify({"succes": True, "message": f"'{produit.nom}' remis en ligne"})
 
@@ -312,8 +354,7 @@ def modifier_statut_commande(cid):
         if note_admin:
             commande.notes_admin = note_admin
 
-        # ── Enregistrement de l'historique ───────────────────────
-        # Chaque changement est tracé avec qui l'a fait et quand
+        # ── Enregistrement de l'historique statut ────────────────
         historique_entry = HistoriqueStatut(
             commande_id  = commande.id,
             statut_avant = statut_avant,
@@ -322,6 +363,71 @@ def modifier_statut_commande(cid):
             modifie_par  = current_user.email if current_user.is_authenticated else "système",
         )
         db.session.add(historique_entry)
+
+        # ── Mouvement de stock automatique ────────────────────────
+        # CONFIRMATION → décrémenter le stock de chaque article
+        if nouveau_statut == "confirmee" and statut_avant != "confirmee":
+            try:
+                import json as _json
+                for article in _json.loads(commande.articles_json or "[]"):
+                    pid_art = article.get("id")
+                    qty = int(article.get("qty",
+                              article.get("quantite",
+                              article.get("qte", 1))))
+                    if pid_art:
+                        prod = db.session.get(Produit, pid_art)
+                    else:
+                        ref = article.get("reference", "")
+                        prod = Produit.query.filter_by(reference=ref).first() if ref else None
+                    if prod and qty > 0:
+                        avant = prod.stock
+                        prod.stock = max(0, prod.stock - qty)
+                        db.session.add(HistoriqueStock(
+                            produit_id=prod.id,
+                            type_mouvement="vente",
+                            quantite_avant=avant,
+                            quantite_apres=prod.stock,
+                            delta=prod.stock - avant,
+                            commande_id=commande.id,
+                            note=f"Vente — commande {commande.numero}"
+                        ))
+            except Exception as e_stock:
+                print(f"⚠️ Erreur décrément stock : {e_stock}")
+
+        # ANNULATION → remettre le stock uniquement si une vente avait été enregistrée
+        elif nouveau_statut == "annulee":
+            vente_log = HistoriqueStock.query.filter_by(
+                commande_id=commande.id,
+                type_mouvement="vente"
+            ).first()
+            if vente_log:
+                try:
+                    import json as _json
+                    for article in _json.loads(commande.articles_json or "[]"):
+                        pid_art = article.get("id")
+                        qty = int(article.get("qty",
+                                  article.get("quantite",
+                                  article.get("qte", 1))))
+                        if pid_art:
+                            prod = db.session.get(Produit, pid_art)
+                        else:
+                            ref = article.get("reference", "")
+                            prod = Produit.query.filter_by(reference=ref).first() if ref else None
+                        if prod and qty > 0:
+                            avant = prod.stock
+                            prod.stock = prod.stock + qty
+                            db.session.add(HistoriqueStock(
+                                produit_id=prod.id,
+                                type_mouvement="annulation_commande",
+                                quantite_avant=avant,
+                                quantite_apres=prod.stock,
+                                delta=qty,
+                                commande_id=commande.id,
+                                note=f"Annulation — stock remis ({commande.numero})"
+                            ))
+                except Exception as e_stock:
+                    print(f"⚠️ Erreur récrément stock : {e_stock}")
+
         db.session.commit()
 
         # ── Génération du lien WhatsApp pour notifier le client ──
@@ -1042,3 +1148,41 @@ def enregistrer_lead():
     except Exception as e:
         db.session.rollback()
         return jsonify({"erreur": str(e)}), 500
+
+
+# ══════════════════════════════════════════════════════════════
+# HISTORIQUE STOCK — Audit et traçabilité sécurisée
+# ══════════════════════════════════════════════════════════════
+
+@admin_bp.route("/admin/api/historique-stock")
+@login_required
+def api_historique_stock():
+    """
+    Tous les mouvements de stock, du plus récent au plus ancien.
+    Filtres optionnels : ?type=vente|ajustement_manuel|... & ?limite=200
+    """
+    type_filtre = request.args.get("type", "")
+    limite      = request.args.get("limite", 200, type=int)
+
+    q = HistoriqueStock.query.order_by(HistoriqueStock.date_mouvement.desc())
+    if type_filtre:
+        q = q.filter(HistoriqueStock.type_mouvement == type_filtre)
+
+    return jsonify([m.vers_dict() for m in q.limit(limite).all()])
+
+
+@admin_bp.route("/admin/api/historique-stock/<int:pid>")
+@login_required
+def api_historique_stock_produit(pid):
+    """Tous les mouvements pour un produit donné + infos du produit."""
+    produit    = db.get_or_404(Produit, pid)
+    mouvements = (
+        HistoriqueStock.query
+        .filter_by(produit_id=pid)
+        .order_by(HistoriqueStock.date_mouvement.desc())
+        .all()
+    )
+    return jsonify({
+        "produit"    : produit.vers_dict_admin(),
+        "mouvements" : [m.vers_dict() for m in mouvements],
+    })
