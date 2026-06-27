@@ -50,10 +50,15 @@ function formaterPrix(n) {
   return new Intl.NumberFormat("fr-CI").format(n || 0) + " FCFA";
 }
 
-/** Formate une date ISO en chaîne lisible. */
+/** Formate une date en chaîne lisible.
+ *  Accepte ISO et le format français "dd/mm/yyyy HH:MM" retourné par Flask. */
 function formaterDate(iso) {
   if (!iso) return "—";
-  return new Date(iso).toLocaleDateString("fr-FR", {
+  // Le serveur retourne déjà du "dd/mm/yyyy HH:MM" — retourner tel quel
+  if (/^\d{2}\/\d{2}\/\d{4}/.test(String(iso))) return iso;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return iso;  // fallback : afficher la valeur brute
+  return d.toLocaleDateString("fr-FR", {
     day: "2-digit", month: "2-digit", year: "numeric",
     hour: "2-digit", minute: "2-digit"
   });
@@ -315,7 +320,8 @@ async function chargerTableCommandes() {
       try {
         const arts = typeof c.articles === "string" ? JSON.parse(c.articles) : (c.articles || []);
         if (arts.length) {
-          resumeArt = arts.slice(0, 2).map(a => `${a.nom} ×${a.quantite}`).join(", ");
+          resumeArt = arts.slice(0, 2)
+            .map(a => `${a.nom} ×${a.quantite || a.qty || 1}`).join(", ");
           if (arts.length > 2) resumeArt += ` + ${arts.length - 2} autre(s)`;
         }
       } catch (_) {}
@@ -384,8 +390,10 @@ async function ouvrirModalCommande(id) {
             ${a.taille  ? `<small> · Taille : ${a.taille}</small>`  : ""}
           </div>
           <div style="text-align:right">
-            <div style="font-weight:700">×${a.quantite}</div>
-            <div style="font-size:11px;color:var(--brun-clair)">${formaterPrix(a.prix_unitaire * a.quantite)}</div>
+            <div style="font-weight:700">×${a.quantite || a.qty || 1}</div>
+            <div style="font-size:11px;color:var(--brun-clair)">${formaterPrix(
+              (a.prix_unitaire || a.prix_actuel || 0) * (a.quantite || a.qty || 1)
+            )}</div>
           </div>
         </div>`).join("") || "<p>Aucun article</p>";
     } catch (_) {
@@ -1443,8 +1451,9 @@ async function chargerVentesMagasin() {
 
     tbody.innerHTML = data.map(c => {
       const arts = (c.articles || []);
-      const resumeArt = arts.slice(0,2).map(a => `${a.nom} ×${a.quantite||a.qty||1}`).join(", ")
-                        + (arts.length > 2 ? ` +${arts.length-2}` : "");
+      const resumeArt = arts.slice(0,2)
+        .map(a => `${a.nom} ×${a.quantite || a.qty || 1}`).join(", ")
+        + (arts.length > 2 ? ` +${arts.length-2}` : "");
       return `
         <tr>
           <td style="font-weight:700;font-family:monospace;color:var(--or-sombre)">${c.numero}</td>

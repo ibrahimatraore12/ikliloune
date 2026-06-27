@@ -131,16 +131,19 @@ def ajouter_produit():
         )
         db.session.add(produit)
         db.session.flush()  # flush pour obtenir l'ID (dans la transaction courante)
-        # ── Log stock initial ────────────────────────────────────
+        # ── Log stock initial (sécurisé si table absente) ────────
         if produit.stock > 0:
-            db.session.add(HistoriqueStock(
-                produit_id=produit.id,
-                type_mouvement="ajout_initial",
-                quantite_avant=0,
-                quantite_apres=produit.stock,
-                delta=produit.stock,
-                note=f"Création produit : {produit.nom}"
-            ))
+            try:
+                db.session.add(HistoriqueStock(
+                    produit_id=produit.id,
+                    type_mouvement="ajout_initial",
+                    quantite_avant=0,
+                    quantite_apres=produit.stock,
+                    delta=produit.stock,
+                    note=f"Création produit : {produit.nom}"
+                ))
+            except Exception as _e_log:
+                print(f"⚠️ Log stock initial ignoré : {_e_log}")
         db.session.commit()  # commit pour obtenir l'ID avant de nommer la photo
 
         # ── Traitement de la photo (optionnel) ──────────────────
@@ -222,14 +225,17 @@ def modifier_produit(pid):
         if produit.stock != stock_avant:
             note_adj = (request.form.get("note_stock", "").strip()
                         or f"Ajustement manuel : {stock_avant} → {produit.stock}")
-            db.session.add(HistoriqueStock(
-                produit_id=produit.id,
-                type_mouvement="ajustement_manuel",
-                quantite_avant=stock_avant,
-                quantite_apres=produit.stock,
-                delta=produit.stock - stock_avant,
-                note=note_adj
-            ))
+            try:
+                db.session.add(HistoriqueStock(
+                    produit_id=produit.id,
+                    type_mouvement="ajustement_manuel",
+                    quantite_avant=stock_avant,
+                    quantite_apres=produit.stock,
+                    delta=produit.stock - stock_avant,
+                    note=note_adj
+                ))
+            except Exception as _e_log:
+                print(f"⚠️ Log ajustement ignoré : {_e_log}")
         db.session.commit()
         print(f"✅ Produit modifié : [{produit.reference}] {produit.nom}")
         return jsonify({"succes": True, "produit": produit.vers_dict_admin()})
@@ -250,14 +256,17 @@ def supprimer_produit(pid):
     produit = db.get_or_404(Produit, pid)
     stock_courant = produit.stock
     produit.actif = False
-    db.session.add(HistoriqueStock(
-        produit_id=produit.id,
-        type_mouvement="desactivation",
-        quantite_avant=stock_courant,
-        quantite_apres=stock_courant,
-        delta=0,
-        note="Produit désactivé — retiré du catalogue"
-    ))
+    try:
+        db.session.add(HistoriqueStock(
+            produit_id=produit.id,
+            type_mouvement="desactivation",
+            quantite_avant=stock_courant,
+            quantite_apres=stock_courant,
+            delta=0,
+            note="Produit désactivé — retiré du catalogue"
+        ))
+    except Exception as _e_log:
+        print(f"⚠️ Log désactivation ignoré : {_e_log}")
     db.session.commit()
     print(f"🗑️ Produit désactivé : [{produit.reference}] {produit.nom}")
     return jsonify({"succes": True, "message": f"'{produit.nom}' retiré du catalogue"})
@@ -269,14 +278,17 @@ def reactiver_produit(pid):
     """Réactive un article précédemment désactivé."""
     produit = db.get_or_404(Produit, pid)
     produit.actif = True
-    db.session.add(HistoriqueStock(
-        produit_id=produit.id,
-        type_mouvement="reactivation",
-        quantite_avant=produit.stock,
-        quantite_apres=produit.stock,
-        delta=0,
-        note="Produit réactivé — remis en ligne"
-    ))
+    try:
+        db.session.add(HistoriqueStock(
+            produit_id=produit.id,
+            type_mouvement="reactivation",
+            quantite_avant=produit.stock,
+            quantite_apres=produit.stock,
+            delta=0,
+            note="Produit réactivé — remis en ligne"
+        ))
+    except Exception as _e_log:
+        print(f"⚠️ Log réactivation ignoré : {_e_log}")
     db.session.commit()
     return jsonify({"succes": True, "message": f"'{produit.nom}' remis en ligne"})
 
@@ -396,10 +408,13 @@ def modifier_statut_commande(cid):
 
         # ANNULATION → remettre le stock uniquement si une vente avait été enregistrée
         elif nouveau_statut == "annulee":
-            vente_log = HistoriqueStock.query.filter_by(
-                commande_id=commande.id,
-                type_mouvement="vente"
-            ).first()
+            try:
+                vente_log = HistoriqueStock.query.filter_by(
+                    commande_id=commande.id,
+                    type_mouvement="vente"
+                ).first()
+            except Exception:
+                vente_log = None  # table absente — migration pas encore lancée
             if vente_log:
                 try:
                     import json as _json

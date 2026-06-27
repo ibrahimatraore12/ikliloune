@@ -64,6 +64,10 @@ def creer_app():
 
     # --- Bannières par défaut au premier lancement -----------
     with app.app_context():
+    # Auto-créer les tables manquantes (dont historique_stock)
+    from backend.models.historique_stock import HistoriqueStock  # noqa
+    db.create_all()
+
         _init_donnees_defaut(app)
 
     return app
