@@ -1,3 +1,16 @@
+#!/usr/bin/env python3
+"""
+fix_footer2.py — Réécriture complète du footer + corrections
+Exécuter depuis ~/IKLILOUNE : python fix_footer2.py
+"""
+import os, subprocess
+
+BASE = os.getcwd()
+
+# ══════════════════════════════════════════════════════════════
+# 1. FOOTER complet réécrit (remplacement total du fichier)
+# ══════════════════════════════════════════════════════════════
+FOOTER = """\
 <!-- ══ FOOTER IKLILOUNE ════════════════════════════════════ -->
 <footer class="footer-ik">
   <div class="footer-grid">
@@ -79,3 +92,34 @@
     <p>© 2026 IKLILOUNE — La Maison du Chic · Tous droits réservés · Abidjan, Côte d'Ivoire</p>
   </div>
 </footer>
+"""
+
+footer_path = os.path.join(BASE, "templates/partials/footer.html")
+with open(footer_path, "w", encoding="utf-8") as f:
+    f.write(FOOTER)
+print("  ✅ footer.html réécrit complètement")
+
+# ══════════════════════════════════════════════════════════════
+# 2. CSS — footer_adresse bien visible
+# ══════════════════════════════════════════════════════════════
+CSS_EXTRA = """
+/* Footer — adresse bien visible */
+.footer-adresse { color: #fff !important; font-size: 13px !important;
+  font-weight: 500; opacity: 1 !important; }
+.footer-collect { font-size: 12px; color: #aaa; margin-top: 10px; }
+.footer-zone-prix { color: #c9a84c; font-size: 11px; }
+.footer-map-wrap  { max-width: 1200px; margin: 0 auto 20px;
+  border-radius: 8px; overflow: hidden; }
+"""
+css_path = os.path.join(BASE, "static/css/main.css")
+with open(css_path, "a", encoding="utf-8") as f:
+    f.write(CSS_EXTRA)
+print("  ✅ CSS adresse visible")
+
+# ══════════════════════════════════════════════════════════════
+# 3. Git commit + push
+# ══════════════════════════════════════════════════════════════
+subprocess.run("git add -A", shell=True)
+subprocess.run('git commit -m "fix: footer adresse bien visible + carte compacte 120px"', shell=True)
+subprocess.run("git push origin main", shell=True)
+print("\n  ✅ Done — redémarre : python main.py")

@@ -1047,3 +1047,11 @@ img { max-width:100%; display:block; }
 
 /* Footer map compact */
 .footer-map-wrap { max-width: 1200px; margin: 0 auto 16px; border-radius: 8px; overflow: hidden; }
+
+/* Footer — adresse bien visible */
+.footer-adresse { color: #fff !important; font-size: 13px !important;
+  font-weight: 500; opacity: 1 !important; }
+.footer-collect { font-size: 12px; color: #aaa; margin-top: 10px; }
+.footer-zone-prix { color: #c9a84c; font-size: 11px; }
+.footer-map-wrap  { max-width: 1200px; margin: 0 auto 20px;
+  border-radius: 8px; overflow: hidden; }
