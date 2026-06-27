@@ -945,113 +945,22 @@ img { max-width:100%; display:block; }
   .kpi-grille { grid-template-columns:repeat(2,1fr); }
 }
 
-
-/* ══════════════════════════════════════════════════════════════
-   CLICK&COLLECT / LIVRAISON
-══════════════════════════════════════════════════════════════ */
-.liv-opts {
-  display: flex; gap: 8px; margin: 8px 0 4px;
-}
-.liv-opt {
-  flex: 1; display: flex; align-items: center; gap: 10px;
-  padding: 10px 12px; border: 2px solid #e0d8cc;
-  border-radius: 12px; cursor: pointer; background: #faf7f2;
-  transition: border-color .2s, background .2s;
-}
-.liv-opt input[type="radio"] { display: none; }
-.liv-opt.selected { border-color: #c9a84c; background: #fdf8ee; }
-.liv-opt:hover    { border-color: #c9a84c88; }
-.liv-icon { font-size: 22px; }
-.liv-opt strong { font-size: 12px; display: block; color: #1a1a1a; }
-.liv-opt small  { font-size: 11px; color: #888; }
-.frais-liv-info {
-  background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
-  padding: 8px 12px; margin-top: 8px; font-size: 12px;
-  color: #7a5c00; line-height: 1.6;
-}
-
-/* ══════════════════════════════════════════════════════════════
-   BANNIÈRE MAGASIN
-══════════════════════════════════════════════════════════════ */
-.banniere-magasin {
-  display: flex; align-items: stretch; background: #1a1a1a;
-  min-height: 160px; overflow: hidden;
-}
-.bm-photo { width: 220px; flex-shrink: 0; overflow: hidden; }
-.bm-photo img { width: 100%; height: 100%; object-fit: cover; opacity: .75; }
-.bm-contenu { flex: 1; padding: 20px 28px; color: #fff; display: flex;
-  flex-direction: column; justify-content: center; }
-.bm-badge {
-  display: inline-block; background: #c9a84c; color: #fff;
-  font-size: 10px; font-weight: 700; letter-spacing: 1.5px;
-  text-transform: uppercase; padding: 3px 12px; border-radius: 20px; margin-bottom: 8px;
-}
-.bm-contenu h3 {
-  font-family: 'Playfair Display', serif; font-size: 20px;
-  margin: 0 0 6px; color: #fff;
-}
-.bm-contenu p   { font-size: 13px; opacity: .85; margin: 3px 0; color: #eee; }
-.bm-contenu a   { color: #c9a84c; text-decoration: none; }
-.btn-itineraire {
-  display: inline-block; background: #c9a84c; color: #fff !important;
-  border-radius: 24px; padding: 7px 16px; font-size: 12px; font-weight: 700;
-  margin-top: 10px; text-decoration: none !important; transition: background .2s;
-  width: fit-content;
-}
-.btn-itineraire:hover { background: #b8973b; }
-@media (max-width: 600px) {
-  .banniere-magasin { flex-direction: column; }
-  .bm-photo { width: 100%; min-height: 120px; }
-}
-
-/* ══════════════════════════════════════════════════════════════
-   FOOTER IKLILOUNE
-══════════════════════════════════════════════════════════════ */
-.footer-ik { background: #111; color: #ccc; padding: 48px 24px 0; margin-top: 40px; }
-.footer-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-  gap: 32px; max-width: 1200px; margin: 0 auto 32px;
-}
-.footer-col    { display: flex; flex-direction: column; gap: 5px; }
-.footer-logo   { height: 40px; width: auto; margin-bottom: 4px; filter: brightness(1.6); }
-.footer-slogan { font-family: 'Playfair Display', serif; font-size: 14px; color: #c9a84c; margin: 0; }
-.footer-desc   { font-size: 12px; opacity: .65; line-height: 1.6; }
-.footer-titre  { font-size: 14px; font-weight: 700; color: #fff; margin: 0 0 8px; }
-.footer-col p  { font-size: 12px; opacity: .7; margin: 2px 0; }
-.footer-col a  { color: #c9a84c; text-decoration: none; }
-.footer-col a:hover { text-decoration: underline; }
-.footer-horaires { display: flex; gap: 8px; align-items: flex-start; }
-.footer-maps {
-  display: inline-block; background: #c9a84c18; color: #c9a84c !important;
-  border: 1px solid #c9a84c44; border-radius: 20px;
-  padding: 5px 14px; font-size: 11px; font-weight: 600;
-  margin-top: 6px; text-decoration: none !important; width: fit-content;
-}
-.footer-zones { list-style: none; padding: 0; margin: 0; display: flex;
-  flex-direction: column; gap: 10px; }
-.footer-zones li { font-size: 12px; line-height: 1.5; }
-.footer-zones span { color: #c9a84c; font-size: 11px; }
-.footer-pay { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
-.footer-pay img { height: 28px; width: auto; filter: brightness(1.8) grayscale(.3); }
-.footer-socials { display: flex; gap: 12px; margin-top: 8px; }
-.footer-socials a { color: #888; transition: color .2s; }
-.footer-socials a:hover { color: #c9a84c; }
-.footer-map-wrap {
-  max-width: 1200px; margin: 0 auto 24px;
-  border-radius: 12px; overflow: hidden;
-}
-.footer-bas {
-  text-align: center; padding: 16px 0 20px;
-  border-top: 1px solid #2a2a2a; font-size: 12px; opacity: .45;
-}
-
-/* Footer map compact */
-.footer-map-wrap { max-width: 1200px; margin: 0 auto 16px; border-radius: 8px; overflow: hidden; }
-
-/* Footer — adresse bien visible */
-.footer-adresse { color: #fff !important; font-size: 13px !important;
-  font-weight: 500; opacity: 1 !important; }
-.footer-collect { font-size: 12px; color: #aaa; margin-top: 10px; }
-.footer-zone-prix { color: #c9a84c; font-size: 11px; }
-.footer-map-wrap  { max-width: 1200px; margin: 0 auto 20px;
-  border-radius: 8px; overflow: hidden; }
+/* ── Footer IKLILOUNE ─────────────────────────────────────── */
+.footer-ik{background:#111;color:#ccc;padding:40px 24px 0;margin-top:32px}
+.footer-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:28px;max-width:1200px;margin:0 auto 28px}
+.footer-col{display:flex;flex-direction:column;gap:5px}
+.footer-logo{height:38px;width:auto;margin-bottom:4px;filter:brightness(1.5)}
+.footer-slogan{font-family:'Playfair Display',serif;font-size:13px;color:#c9a84c;margin:0}
+.footer-desc{font-size:11px;opacity:.6;line-height:1.6}
+.footer-titre{font-size:13px;font-weight:700;color:#fff;margin:0 0 8px}
+.footer-col p{font-size:12px;opacity:.75;margin:2px 0}
+.footer-col a{color:#c9a84c;text-decoration:none}
+.footer-col a:hover{text-decoration:underline}
+.f-addr{font-size:13px !important;color:#fff !important;opacity:1 !important;font-weight:500}
+.footer-maps{display:inline-block;background:#c9a84c18;color:#c9a84c !important;border:1px solid #c9a84c44;border-radius:16px;padding:4px 12px;font-size:11px;font-weight:600;margin-top:6px;text-decoration:none !important}
+.footer-zones{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px;font-size:12px}
+.footer-zones span{color:#c9a84c;font-size:11px}
+.footer-pay{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:4px}
+.footer-pay img{height:26px;width:auto;filter:brightness(1.8)}
+.footer-map-wrap{max-width:1200px;margin:0 auto 20px;border-radius:6px;overflow:hidden}
+.footer-bas{text-align:center;padding:14px 0 18px;border-top:1px solid #222;font-size:11px;opacity:.4}
