@@ -86,6 +86,17 @@ def api_produits_admin():
     return jsonify([p.vers_dict_admin() for p in produits])
 
 
+@admin_bp.route("/admin/api/produit/<int:pid>")
+@login_required
+def api_produit_admin_detail(pid):
+    """
+    Retourne un produit unique avec toutes ses données admin.
+    Utilisé par le modal de modification pour afficher le vrai stock.
+    """
+    produit = db.get_or_404(Produit, pid)
+    return jsonify(produit.vers_dict_admin())
+
+
 @admin_bp.route("/admin/api/produit/ajouter", methods=["POST"])
 @login_required
 def ajouter_produit():

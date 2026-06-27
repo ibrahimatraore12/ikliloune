@@ -244,8 +244,8 @@ async function reactiverProduit(id, nom) {
  */
 async function editerProduit(id) {
   try {
-    // Utiliser la route admin qui expose les vraies données de stock
-    const rep = await fetch(`/api/produits/${id}`);
+    // Route admin → retourne le vrai stock (vers_dict_admin)
+    const rep = await fetch(`/admin/api/produit/${id}`);
     const p   = await rep.json();
 
     ADMIN.editId   = id;
