@@ -964,3 +964,28 @@ img { max-width:100%; display:block; }
 .footer-pay img{height:26px;width:auto;filter:brightness(1.8)}
 .footer-map-wrap{max-width:1200px;margin:0 auto 20px;border-radius:6px;overflow:hidden}
 .footer-bas{text-align:center;padding:14px 0 18px;border-top:1px solid #222;font-size:11px;opacity:.4}
+
+/* Footer logo non déformé */
+.footer-logo {
+  height: auto !important;
+  max-height: 44px !important;
+  width: auto !important;
+  max-width: 120px !important;
+  object-fit: contain !important;
+  margin-bottom: 6px;
+  filter: brightness(1.6);
+}
+/* Réseaux sociaux footer */
+.footer-socials {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+.footer-socials a {
+  color: #888;
+  transition: color .2s;
+  display: flex;
+  align-items: center;
+}
+.footer-socials a:hover { color: #c9a84c; }
