@@ -863,6 +863,19 @@ def api_stats_kpis():
     return jsonify(calculer_kpis())
 
 
+@admin_bp.route("/admin/api/stats/graphique-ventes")
+@login_required
+def api_graphique_ventes():
+    """
+    Retourne le graphique ventes mensuelles en base64 pour une année donnée.
+    Utilisé par le bouton Préc./Suiv. de la section Statistiques.
+    Paramètre URL : ?annee=2026
+    """
+    annee = request.args.get("annee", type=int, default=datetime.now().year)
+    img = graphique_ventes_mensuelles(annee)
+    return jsonify({"image": img, "annee": annee})
+
+
 @admin_bp.route("/admin/api/export/ventes-excel")
 @login_required
 def exporter_ventes_excel():
@@ -978,7 +991,9 @@ def exporter_ventes_excel():
         try:
             articles = json.loads(c.articles_json or "[]")
             resume_art = ", ".join(
-                f"{a.get('nom','?')} x{a.get('quantite',1)}" for a in articles
+                f"{a.get('nom','?')}"  # nom
+                f" x{a.get('quantite', a.get('qty', a.get('qte', 1)))}"  # qty
+                for a in articles
             )
         except Exception:
             resume_art = c.articles_json or ""
@@ -1076,7 +1091,10 @@ def exporter_commandes_excel():
     for c in commandes:
         try:
             articles = json.loads(c.articles_json or "[]")
-            resume   = ", ".join(f"{a.get('nom','?')} x{a.get('quantite',1)}" for a in articles)
+            resume   = ", ".join(
+                f"{a.get('nom','?')} x{a.get('quantite', a.get('qty', a.get('qte', 1)))}"
+                for a in articles
+            )
         except Exception:
             resume = c.articles_json or ""
 

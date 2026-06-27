@@ -354,19 +354,27 @@ def graphique_ventes_mensuelles(annee=None):
     _style_axes(ax)
 
     # Colorer différemment les barres avec CA > 0
-    couleurs = [OR if v > 0 else OR + "44" for v in valeurs]
-    barres = ax.bar(mois, valeurs, color=couleurs,
-                    edgecolor=OR_CLAIR, linewidth=0.6,
-                    width=0.65, zorder=3)
+    if max(valeurs, default=0) > 0:
+        # Barres réelles avec couleur par valeur
+        couleurs = [OR if v > 0 else OR + "44" for v in valeurs]
+        barres = ax.bar(mois, valeurs, color=couleurs,
+                        edgecolor=OR_CLAIR, linewidth=0.6,
+                        width=0.65, zorder=3)
+        for b, v in zip(barres, valeurs):
+            if v > 0:
+                label = f"{v//1000}k" if v >= 10000 else str(v)
+                ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 500,
+                        label, ha="center", va="bottom",
+                        color=OR_CLAIR, fontsize=7, fontweight="bold")
+    else:
+        # Aucune vente — barres vides + message centré
+        ax.bar(mois, [0] * 12, color=OR + "22",
+               edgecolor=OR + "44", linewidth=0.6, width=0.65)
+        ax.text(0.5, 0.5, "Aucune vente confirmée\npour cette période",
+                ha="center", va="center", color=TEXTE, fontsize=11,
+                fontweight="bold", transform=ax.transAxes, alpha=0.6)
 
-    # Afficher le CA au-dessus de chaque barre non nulle
-    for b, v in zip(barres, valeurs):
-        if v > 0:
-            label = f"{v//1000}k" if v >= 10000 else str(v)
-            ax.text(b.get_x() + b.get_width() / 2, b.get_height() + 500,
-                    label, ha="center", va="bottom",
-                    color=OR_CLAIR, fontsize=7, fontweight="bold")
-
+    ax.set_ylim(bottom=0)   # Axe Y toujours positif
     ax.set_ylabel("CA (FCFA)", color=TEXTE, fontsize=8)
     ax.set_title(f"Ventes mensuelles {annee or datetime.utcnow().year}",
                  color=TEXTE, fontsize=10, pad=12)
@@ -437,6 +445,7 @@ def graphique_ventes_30_jours():
     _style_axes(ax)
 
     # Remplissage sous la courbe pour effet "area chart"
+    ax.set_ylim(bottom=0)  # Pas de CA négatif
     ax.fill_between(range(len(valeurs)), valeurs,
                     alpha=0.15, color=OR, zorder=2)
     ax.plot(range(len(valeurs)), valeurs,

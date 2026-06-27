@@ -158,38 +158,40 @@ def message_notification_statut(commande) -> dict:
     # Messages personnalisés selon le statut
     messages_statut = {
         "confirmee": (
-            f"Votre commande *{commande.numero}* est confirmée ! 🎉\n"
-            f"Nous préparons votre colis avec soin.\n"
+            f"Votre commande *{commande.numero}* est confirmee !\n"
+            f"Nous preparons votre colis avec soin.\n"
             f"Montant : *{_formater_montant(commande.total)}*"
         ),
         "en_preparation": (
-            f"Votre commande *{commande.numero}* est en cours de préparation 🔄\n"
-            f"Nous vous contacterons dès qu'elle est expédiée."
+            f"Votre commande *{commande.numero}* est en cours de preparation.\n"
+            f"Nous vous contacterons des qu'elle est expediee."
         ),
         "expediee": (
-            f"Votre commande *{commande.numero}* est en route ! 🚚\n"
+            f"Votre commande *{commande.numero}* est en route !\n"
             f"Un livreur vous contactera pour la livraison.\n"
-            f"Adresse enregistrée : {getattr(commande, 'client_adresse', '') or 'voir détails'}"
+            f"Adresse : {getattr(commande, 'client_adresse', '') or 'voir details'}"
         ),
         "livree": (
-            f"Votre commande *{commande.numero}* a bien été livrée ! 🎉\n"
-            f"Merci de votre confiance. N'hésitez pas à nous laisser un retour."
+            f"Votre commande *{commande.numero}* a bien ete livree !\n"
+            f"Merci de votre confiance. N'hesitez pas a nous laisser un retour."
         ),
         "annulee": (
-            f"Votre commande *{commande.numero}* a été annulée ❌\n"
+            f"Votre commande *{commande.numero}* a ete annulee.\n"
             f"Pour toute question, contactez-nous."
         ),
     }
-    corps = messages_statut.get(commande.statut, f"Statut mis à jour : *{libelle}*")
+    corps = messages_statut.get(commande.statut, f"Statut mis a jour : *{libelle}*")
 
+    # Messages sans emojis → compatibles tous téléphones
     message = (
-        f"Bonjour *{commande.client_nom}* 🌸\n\n"
-        f"{emoji} *IKLILOUNE — Mise à jour commande*\n\n"
+        f"Bonjour *{commande.client_nom}*\n\n"
+        f"*IKLILOUNE* | Mise a jour commande\n"
+        f"---\n\n"
         f"{corps}\n\n"
-        f"📦 Réf : *{commande.numero}*\n"
-        f"💰 Total : *{_formater_montant(commande.total)}*\n\n"
-        f"Des questions ? Répondez à ce message.\n"
-        f"*IKLILOUNE — La Maison du Chic* 🛍️"
+        f"Ref : *{commande.numero}*\n"
+        f"Total : *{_formater_montant(commande.total)}*\n\n"
+        f"Des questions ? Repondez a ce message.\n"
+        f"*IKLILOUNE - La Maison du Chic*"
     )
 
     tel = _normaliser_telephone(commande.client_telephone)

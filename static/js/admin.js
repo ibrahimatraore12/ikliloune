@@ -1225,16 +1225,21 @@ async function chargerGraphiqueAnnee(btn, delta) {
   _anneeGraph += delta;
   document.getElementById("annee-graph-label").textContent = _anneeGraph;
 
+  const img = document.getElementById("img-graph-ventes");
+  if (img) img.style.opacity = "0.4";
+
   try {
-    // On recharge le graphique depuis le serveur
-    const rep  = await fetch(`/admin/api/stats/ventes?annee=${_anneeGraph}`);
+    // Récupérer le graphique Matplotlib en base64 depuis le serveur
+    const rep  = await fetch(`/admin/api/stats/graphique-ventes?annee=${_anneeGraph}`);
     const data = await rep.json();
-    // Le graphique matplotlib est rendu côté serveur au chargement initial.
-    // Pour le rechargement dynamique, on affiche un message simple.
-    const img = document.getElementById("img-graph-ventes");
-    if (img) img.style.opacity = "0.5";
-    afficherToast(`📊 Statistiques ${_anneeGraph} demandées. Actualisez la page pour voir le graphique.`);
+    if (img && data.image) {
+      img.src = data.image;
+      img.style.opacity = "1";
+    }
+    afficherToast(`Statistiques ${_anneeGraph} chargées`);
   } catch (e) {
+    if (img) img.style.opacity = "1";
+    afficherToast("Erreur chargement graphique", "❌");
     console.error("chargerGraphiqueAnnee:", e);
   }
 }
