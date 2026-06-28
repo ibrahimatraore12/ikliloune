@@ -44,4 +44,4 @@ EXPOSE 5000
 
 # Commande de lancement avec Gunicorn
 # 2 workers = bon équilibre pour un petit site
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "main:creer_app()"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--timeout", "120", "--log-level", "info", "wsgi:app"]
