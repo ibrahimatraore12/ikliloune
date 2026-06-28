@@ -99,6 +99,18 @@ function filtrerCommandes(statut, btn) {
   });
 }
 
+
+/** Filtre combiné : texte + catégorie sélectionnée dans le dropdown. */
+function filtrerProduits() {
+  const terme = (document.getElementById("search-produits")?.value || "").toLowerCase().trim();
+  const cat   = (document.getElementById("filtre-cat")?.value   || "").toLowerCase().trim();
+  document.querySelectorAll("#tbody-produits tr").forEach(row => {
+    const texteOK = !terme || row.textContent.toLowerCase().includes(terme);
+    const catOK   = !cat   || (row.dataset.categorie || "") === cat;
+    row.style.display = (texteOK && catOK) ? "" : "none";
+  });
+}
+
 /** Sélecteur d'emoji pour le label de catégorie produit. */
 function iconeCategorie(cat) {
   return { parfum: "🌸", sac: "👜", chaussure: "👟", vetement: "👗", accessoire: "💍" }[cat] || "📦";
@@ -134,6 +146,8 @@ function adminSection(section, btn) {
     case "bannieres": chargerBannieres();       break;
     case "promos":    chargerCodesPromo();      break;
     case "stats":     /* graphiques déjà rendus côté serveur */ break;
+    case "magasin":   if (typeof chargerVentesMagasin === "function") chargerVentesMagasin(); break;
+    case "stock-audit": if (typeof chargerAuditStock === "function") chargerAuditStock(); break;
   }
 }
 
@@ -174,7 +188,7 @@ async function chargerTableProduits() {
         : `<span style="font-weight:700;color:var(--or-sombre)">${formaterPrix(p.prix)}</span>`;
 
       return `
-        <tr>
+        <tr data-categorie="${(p.categorie||'').toLowerCase()}">
           <td>
             <div class="prod-mini-photo">
               ${p.photo
@@ -1252,6 +1266,13 @@ async function chargerGraphiqueAnnee(btn, delta) {
 document.addEventListener("DOMContentLoaded", () => {
   // Charger le tableau produits au démarrage (section visible par défaut)
   chargerTableProduits();
+
+  // Filtre produits : texte + catégorie combinés
+  const _sp = document.getElementById("search-produits");
+  if (_sp) _sp.addEventListener("input", filtrerProduits);
+  const _fc = document.getElementById("filtre-cat");
+  if (_fc) _fc.addEventListener("change", filtrerProduits);
+
 
   // Fermer les modals en cliquant sur le fond sombre
   ["modal-bg", "modal-commande-bg", "modal-banniere-bg", "modal-client-bg",
